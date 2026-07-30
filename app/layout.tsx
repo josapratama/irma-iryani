@@ -16,10 +16,14 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <head>
-        {/* Scroll to top on every page load/refresh before paint */}
+        {/* Prevent dark mode flash — apply saved theme before first paint */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark') document.documentElement.classList.add('dark');
+              } catch(e) {}
               if ('scrollRestoration' in history) {
                 history.scrollRestoration = 'manual';
               }

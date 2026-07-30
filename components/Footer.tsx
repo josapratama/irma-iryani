@@ -4,6 +4,10 @@ import { motion } from "framer-motion";
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
 import { Heart } from "lucide-react";
 
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 export default function Footer() {
   const { language } = useThemeLanguage();
   return (
@@ -28,15 +32,15 @@ export default function Footer() {
             </>
           )}
         </motion.p>
-        <motion.a
-          href="#hero"
+        <motion.button
+          onClick={scrollToTop}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="text-xs font-medium text-text-muted transition-colors hover:text-brown"
+          className="cursor-pointer text-xs font-medium text-text-muted transition-colors hover:text-brown"
         >
           ↑ {language === "id" ? "Kembali ke atas" : "Back to top"}
-        </motion.a>
+        </motion.button>
       </div>
     </footer>
   );

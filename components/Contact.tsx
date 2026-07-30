@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   Mail,
   Phone,
@@ -64,6 +64,15 @@ export default function Contact() {
     "idle",
   );
   const { slideUp, slideRight, slideLeft, stagger } = useMotion();
+
+  // Reset status when language changes to avoid stale "sent/error" UI
+  const prevLang = useRef(language);
+  useEffect(() => {
+    if (prevLang.current !== language) {
+      prevLang.current = language;
+      if (status !== "idle" && status !== "sending") setStatus("idle");
+    }
+  }, [language, status]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -6,8 +6,6 @@
  * always produce the same output, avoiding hydration mismatches.
  */
 
-"use client";
-
 import { useReducedMotion } from "framer-motion";
 import type { Variants } from "framer-motion";
 

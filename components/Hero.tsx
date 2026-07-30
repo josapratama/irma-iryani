@@ -27,8 +27,12 @@ const content = {
   },
 };
 
-function scrollToAbout() {
-  document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
+function scrollToSection(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const navHeight = 72;
+  const top = el.getBoundingClientRect().top + window.scrollY - navHeight;
+  window.scrollTo({ top, behavior: "smooth" });
 }
 
 export default function Hero() {
@@ -132,6 +136,10 @@ export default function Hero() {
             >
               <motion.a
                 href="#contact"
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollToSection("contact");
+                }}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 className="rounded-full bg-brown px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-brown/20"
@@ -210,7 +218,7 @@ export default function Hero() {
 
       {/* Scroll-to-next button — sits above everything, fully clickable */}
       <motion.button
-        onClick={scrollToAbout}
+        onClick={() => scrollToSection("about")}
         aria-label="Scroll ke bawah"
         variants={slideUp}
         initial="hidden"
