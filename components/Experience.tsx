@@ -40,6 +40,13 @@ const photos = {
         en: "Group Photo with HMK UNSRI Members",
       },
     },
+    {
+      src: "/experiences/exp-hmk-members-2.png",
+      caption: {
+        id: "Dokumentasi Kegiatan HMK UNSRI",
+        en: "HMK UNSRI Activity Documentation",
+      },
+    },
   ],
 };
 
