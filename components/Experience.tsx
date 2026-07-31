@@ -1,15 +1,39 @@
 "use client";
 
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
-import { Briefcase, Users, Award } from "lucide-react";
+import { useRef, useState } from "react";
+import { Award, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
 import { useMotion } from "@/lib/motion";
+import Image from "next/image";
+
+// Photos for each experience item
+const photos = {
+  internship: [
+    {
+      src: "/experiences/exp-plp-ceremony.jpeg",
+      caption: {
+        id: "Upacara Pelepasan Mahasiswa PLP",
+        en: "PLP Student Departure Ceremony",
+      },
+    },
+  ],
+  org: [
+    {
+      src: "/experiences/exp-hmk-members.png",
+      caption: {
+        id: "Foto Bersama Anggota HMK UNSRI",
+        en: "Group Photo with HMK UNSRI Members",
+      },
+    },
+  ],
+};
 
 const content = {
   id: {
     sectionTag: "Pengalaman",
     title: "Pengalaman & Organisasi",
+    photoLabel: "Dokumentasi",
     internship: {
       label: "Magang",
       title: "Mahasiswa Praktik PLP Pendidikan Kimia",
@@ -76,6 +100,7 @@ const content = {
   en: {
     sectionTag: "Experience",
     title: "Experience & Organization",
+    photoLabel: "Documentation",
     internship: {
       label: "Internship",
       title: "PLP Chemistry Education Student Practice",
@@ -141,6 +166,158 @@ const content = {
   },
 };
 
+// ── Photo lightbox ────────────────────────────────────────────────────
+function Lightbox({
+  photos: imgs,
+  startIndex,
+  lang,
+  onClose,
+}: {
+  photos: { src: string; caption: { id: string; en: string } }[];
+  startIndex: number;
+  lang: "id" | "en";
+  onClose: () => void;
+}) {
+  const [idx, setIdx] = useState(startIndex);
+  const prev = () => setIdx((i) => (i - 1 + imgs.length) % imgs.length);
+  const next = () => setIdx((i) => (i + 1) % imgs.length);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 280 }}
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-3xl overflow-hidden rounded-2xl bg-cream shadow-2xl"
+      >
+        {/* Close */}
+        <button
+          onClick={onClose}
+          aria-label="Tutup"
+          className="absolute right-3 top-3 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+        >
+          <X size={16} />
+        </button>
+
+        {/* Image */}
+        <div className="relative aspect-video w-full bg-cream-dark">
+          <Image
+            src={imgs[idx].src}
+            alt={imgs[idx].caption[lang]}
+            fill
+            className="object-cover"
+            sizes="768px"
+          />
+          {/* Gradient overlay for caption */}
+          <div className="absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-black/60 to-transparent" />
+          <p className="absolute bottom-4 left-4 right-12 text-sm font-medium text-white drop-shadow">
+            {imgs[idx].caption[lang]}
+          </p>
+        </div>
+
+        {/* Nav arrows (only if multiple photos) */}
+        {imgs.length > 1 && (
+          <>
+            <button
+              onClick={prev}
+              className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+            >
+              <ChevronRight size={18} />
+            </button>
+            {/* Dots */}
+            <div className="flex justify-center gap-1.5 py-3">
+              {imgs.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setIdx(i)}
+                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                    i === idx ? "w-5 bg-brown" : "w-1.5 bg-brown-light/40"
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ── Photo strip thumbnail ─────────────────────────────────────────────
+function PhotoStrip({
+  photoKey,
+  lang,
+  label,
+}: {
+  photoKey: keyof typeof photos;
+  lang: "id" | "en";
+  label: string;
+}) {
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const imgs = photos[photoKey];
+
+  return (
+    <>
+      <div className="mt-4">
+        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brown">
+          <span className="inline-block h-px w-4 bg-brown" />
+          {label}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {imgs.map((img, i) => (
+            <motion.button
+              key={i}
+              onClick={() => setLightboxIdx(i)}
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              className="group relative h-20 w-32 cursor-pointer overflow-hidden rounded-xl border-2 border-brown-light/20 hover:border-brown/50 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <Image
+                src={img.src}
+                alt={img.caption[lang]}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
+                sizes="128px"
+              />
+              {/* Hover overlay */}
+              <div className="absolute inset-0 flex items-center justify-center bg-brown/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-white">
+                  Lihat
+                </span>
+              </div>
+            </motion.button>
+          ))}
+        </div>
+      </div>
+
+      {/* Lightbox */}
+      {lightboxIdx !== null && (
+        <Lightbox
+          photos={imgs}
+          startIndex={lightboxIdx}
+          lang={lang}
+          onClose={() => setLightboxIdx(null)}
+        />
+      )}
+    </>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────
 export default function Experience() {
   const { language } = useThemeLanguage();
   const c = content[language];
@@ -155,6 +332,7 @@ export default function Experience() {
       ref={ref}
     >
       <div className="mx-auto max-w-6xl">
+        {/* Heading */}
         <motion.div
           variants={slideUp}
           initial="hidden"
@@ -177,50 +355,101 @@ export default function Experience() {
           animate={inView ? "visible" : "hidden"}
           className="mb-8 grid gap-5 xl:grid-cols-2"
         >
-          {[
-            {
-              icon: <Briefcase size={20} className="text-brown" />,
-              data: c.internship,
-            },
-            { icon: <Users size={20} className="text-brown" />, data: c.org },
-          ].map(({ icon, data }) => (
-            <motion.div
-              key={data.title}
-              variants={slideUp}
-              className="rounded-2xl border border-brown-light/20 bg-cream-dark p-5 sm:p-6"
-            >
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-brown-light/30 bg-brown/10">
-                  {icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-brown">
-                    {data.label}
-                  </span>
-                  <h4 className="mt-0.5 font-bold text-text-main">
-                    {data.title}
-                  </h4>
-                  <p className="mt-0.5 text-sm font-medium text-brown">
-                    {data.org}
-                  </p>
-                  <p className="mb-4 mt-1 text-xs text-text-muted">
-                    {data.period}
-                  </p>
-                  <ul className="space-y-2.5">
-                    {data.points.map((p, i) => (
-                      <li
-                        key={i}
-                        className="flex items-start gap-2.5 text-sm leading-relaxed text-text-muted"
-                      >
-                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brown-light" />
-                        {p}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+          {/* Internship */}
+          <motion.div
+            variants={slideUp}
+            className="overflow-hidden rounded-2xl border border-brown-light/20 bg-cream-dark"
+          >
+            {/* Hero photo banner */}
+            <div className="relative h-44 w-full overflow-hidden">
+              <Image
+                src="/exp-plp-ceremony.jpg"
+                alt={photos.internship[0].caption[language]}
+                fill
+                className="object-cover object-center"
+                sizes="(max-width: 1280px) 100vw, 50vw"
+              />
+              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
+              {/* Label badge */}
+              <span className="absolute left-4 top-4 rounded-full border border-brown-light/40 bg-brown/80 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+                {c.internship.label}
+              </span>
+              {/* Title overlay */}
+              <div className="absolute bottom-4 left-4 right-4">
+                <p className="text-xs text-white/80">{c.internship.org}</p>
+                <h4 className="font-bold text-white leading-snug">
+                  {c.internship.title}
+                </h4>
               </div>
-            </motion.div>
-          ))}
+            </div>
+
+            {/* Content */}
+            <div className="p-5 sm:p-6">
+              <p className="mb-4 text-xs text-text-muted">
+                {c.internship.period}
+              </p>
+              <ul className="space-y-2.5">
+                {c.internship.points.map((p, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2.5 text-sm leading-relaxed text-text-muted"
+                  >
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brown-light" />
+                    {p}
+                  </li>
+                ))}
+              </ul>
+              <PhotoStrip
+                photoKey="internship"
+                lang={language}
+                label={c.photoLabel}
+              />
+            </div>
+          </motion.div>
+
+          {/* Organization */}
+          <motion.div
+            variants={slideUp}
+            className="overflow-hidden rounded-2xl border border-brown-light/20 bg-cream-dark"
+          >
+            {/* Hero photo banner */}
+            <div className="relative h-44 w-full overflow-hidden">
+              <Image
+                src="/exp-hmk-members.jpg"
+                alt={photos.org[0].caption[language]}
+                fill
+                className="object-cover object-top"
+                sizes="(max-width: 1280px) 100vw, 50vw"
+              />
+              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
+              <span className="absolute left-4 top-4 rounded-full border border-brown-light/40 bg-brown/80 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+                {c.org.label}
+              </span>
+              <div className="absolute bottom-4 left-4 right-4">
+                <p className="text-xs text-white/80">{c.org.org}</p>
+                <h4 className="font-bold text-white leading-snug">
+                  {c.org.title}
+                </h4>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-5 sm:p-6">
+              <p className="mb-4 text-xs text-text-muted">{c.org.period}</p>
+              <ul className="space-y-2.5">
+                {c.org.points.map((p, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2.5 text-sm leading-relaxed text-text-muted"
+                  >
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brown-light" />
+                    {p}
+                  </li>
+                ))}
+              </ul>
+              <PhotoStrip photoKey="org" lang={language} label={c.photoLabel} />
+            </div>
+          </motion.div>
         </motion.div>
 
         {/* Committee */}

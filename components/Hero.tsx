@@ -5,6 +5,7 @@ import { MapPin, Mail, Phone, Download, ChevronDown } from "lucide-react";
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
 import { useMotion } from "@/lib/motion";
 import Image from "next/image";
+import SocialLinks from "@/components/SocialLinks";
 
 const content = {
   id: {
@@ -156,6 +157,14 @@ export default function Hero() {
                 <Download size={14} />
                 {c.cta}
               </motion.a>
+            </motion.div>
+
+            {/* Social media links */}
+            <motion.div
+              variants={slideUp}
+              className="mt-7 flex justify-center lg:justify-start"
+            >
+              <SocialLinks orientation="horizontal" size="md" />
             </motion.div>
           </motion.div>
 

@@ -9,7 +9,7 @@ const content = {
   id: {
     sectionTag: "Tentang Saya",
     title: "Profil Singkat",
-    bio: "Saya merupakan lulusan S1 Pendidikan Kimia Universitas Sriwijaya dengan IPK 3,90 yang memiliki kemampuan analisis, pemecahan masalah, serta berpikir sistematis yang terbentuk dari latar belakang sains dan pengalaman penelitian. Terbiasa bekerja secara terstruktur, teliti dalam mengolah data, serta mampu beradaptasi dengan baik baik secara individu maupun dalam tim. Selain itu, memiliki pemahaman dalam evaluasi, perencanaan program, dan pendampingan individu dari pengalaman akademik di bidang pendidikan. Saya memiliki ketertarikan untuk berkontribusi dalam lingkungan kerja yang dinamis, khususnya pada bidang yang membutuhkan ketelitian, pengelolaan informasi, serta kemampuan komunikasi yang baik.",
+    bio: "Saya merupakan lulusan S1 Pendidikan Kimia Universitas Sriwijaya dengan IPK 3,90 yang memiliki kemampuan analisis, pemecahan masalah, serta berpikir sistematis yang terbentuk dari latar belakang sains dan pengalaman penelitian. Terbiasa bekerja secara terstruktur, teliti dalam mengolah data, serta mampu beradaptasi dengan baik, baik secara individu maupun dalam tim. Selain itu, memiliki pemahaman dalam evaluasi, perencanaan program, dan pendampingan individu dari pengalaman akademik di bidang pendidikan. Saya memiliki ketertarikan untuk berkontribusi dalam lingkungan kerja yang dinamis, khususnya pada bidang yang membutuhkan ketelitian, pengelolaan informasi, serta kemampuan komunikasi yang baik.",
     highlights: [
       { label: "IPK", value: "3,90" },
       { label: "Universitas", value: "UNSRI" },
