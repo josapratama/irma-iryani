@@ -13,15 +13,6 @@ const content = {
     softSkills: {
       label: "Soft Skill",
       items: [
-        { name: "Emotional Resilience", level: 88 },
-        { name: "Social Influence", level: 82 },
-        { name: "Adaptability", level: 90 },
-        { name: "Self Efficacy", level: 85 },
-      ],
-    },
-    hardSkills: {
-      label: "Hard Skill",
-      items: [
         { name: "Problem Solving", level: 88 },
         { name: "Critical Thinking", level: 85 },
         { name: "Teamwork", level: 92 },
@@ -30,13 +21,18 @@ const content = {
         { name: "Communication Skills", level: 90 },
       ],
     },
-    languages: {
-      label: "Bahasa & Alat",
+    hardSkills: {
+      label: "Hard Skill",
       items: [
         { name: "Microsoft Word", level: 90 },
         { name: "Microsoft Excel", level: 85 },
         { name: "Microsoft PowerPoint", level: 88 },
         { name: "Copywriting", level: 80 },
+      ],
+    },
+    languages: {
+      label: "Bahasa",
+      items: [
         { name: "Bahasa Indonesia", level: 98, note: "Fasih" },
         { name: "English", level: 50, note: "Dasar" },
       ],
@@ -47,6 +43,10 @@ const content = {
       "Integrity at Work",
       "Data Science",
       "Emotional Intelligence",
+      "Emotional Resilience",
+      "Social Influence",
+      "Adaptability",
+      "Self Efficacy",
     ],
   },
   en: {
@@ -54,15 +54,6 @@ const content = {
     title: "Skills",
     softSkills: {
       label: "Soft Skills",
-      items: [
-        { name: "Emotional Resilience", level: 88 },
-        { name: "Social Influence", level: 82 },
-        { name: "Adaptability", level: 90 },
-        { name: "Self Efficacy", level: 85 },
-      ],
-    },
-    hardSkills: {
-      label: "Hard Skills",
       items: [
         { name: "Problem Solving", level: 88 },
         { name: "Critical Thinking", level: 85 },
@@ -72,13 +63,18 @@ const content = {
         { name: "Communication Skills", level: 90 },
       ],
     },
-    languages: {
-      label: "Languages & Tools",
+    hardSkills: {
+      label: "Hard Skills",
       items: [
         { name: "Microsoft Word", level: 90 },
         { name: "Microsoft Excel", level: 85 },
         { name: "Microsoft PowerPoint", level: 88 },
         { name: "Copywriting", level: 80 },
+      ],
+    },
+    languages: {
+      label: "Languages",
+      items: [
         { name: "Bahasa Indonesia", level: 98, note: "Native" },
         { name: "English", level: 50, note: "Basic" },
       ],
@@ -89,6 +85,10 @@ const content = {
       "Integrity at Work",
       "Data Science",
       "Emotional Intelligence",
+      "Emotional Resilience",
+      "Social Influence",
+      "Adaptability",
+      "Self Efficacy",
     ],
   },
 };
