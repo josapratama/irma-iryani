@@ -363,7 +363,7 @@ export default function Experience() {
             {/* Hero photo banner */}
             <div className="relative h-44 w-full overflow-hidden">
               <Image
-                src="/exp-plp-ceremony.jpg"
+                src="/experiences/exp-plp-ceremony.jpeg"
                 alt={photos.internship[0].caption[language]}
                 fill
                 className="object-cover object-center"
@@ -415,7 +415,7 @@ export default function Experience() {
             {/* Hero photo banner */}
             <div className="relative h-44 w-full overflow-hidden">
               <Image
-                src="/exp-hmk-members.jpg"
+                src="/experiences/exp-hmk-members.png"
                 alt={photos.org[0].caption[language]}
                 fill
                 className="object-cover object-top"

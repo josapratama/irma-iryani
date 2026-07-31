@@ -115,11 +115,11 @@ export default function Hero() {
                 Prabumulih, Sumatera Selatan
               </span>
               <a
-                href="mailto:irmairyani@gmail.com"
+                href="mailto:irmairyani698W@gmail.com"
                 className="flex items-center gap-1.5 rounded-full border border-brown-light/15 bg-cream-dark/60 px-3 py-1.5 text-xs text-text-muted transition-colors hover:text-brown"
               >
                 <Mail size={12} className="shrink-0 text-brown" />
-                irmairyani@gmail.com
+                irmairyani698@gmail.com
               </a>
               <a
                 href="tel:0887437204107"
