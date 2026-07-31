@@ -221,7 +221,7 @@ export default function Hero() {
                   src="/profile.jpg"
                   alt="Irma Iryani"
                   fill
-                  className="object-cover object-center"
+                  className="object-cover object-[center_30%]"
                   sizes="(max-width: 640px) 208px, (max-width: 768px) 256px, (max-width: 1024px) 288px, 384px"
                   priority
                 />
