@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useInView } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import {
   Mail,
   Phone,
@@ -63,16 +63,14 @@ export default function Contact() {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
     "idle",
   );
+  const [lastLang, setLastLang] = useState(language);
   const { slideUp, slideRight, slideLeft, stagger } = useMotion();
 
-  // Reset status when language changes to avoid stale "sent/error" UI
-  const prevLang = useRef(language);
-  useEffect(() => {
-    if (prevLang.current !== language) {
-      prevLang.current = language;
-      if (status !== "idle" && status !== "sending") setStatus("idle");
-    }
-  }, [language, status]);
+  // Reset status when language changes — derived, no useEffect needed
+  if (language !== lastLang) {
+    setLastLang(language);
+    if (status !== "idle" && status !== "sending") setStatus("idle");
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +83,7 @@ export default function Contact() {
         `Nama: ${form.name}\nEmail: ${form.email}\n\n${form.message}`,
       );
       window.open(
-        `mailto:irmairyani@gmail.com?subject=${subject}&body=${body}`,
+        `mailto:irmairyani698@gmail.com?subject=${subject}&body=${body}`,
       );
       return;
     }
@@ -108,8 +106,8 @@ export default function Contact() {
     {
       icon: <Mail size={18} />,
       label: "Email",
-      value: "irmairyani@gmail.com",
-      href: "mailto:irmairyani@gmail.com",
+      value: "irmairyani698@gmail.com",
+      href: "mailto:irmairyani698@gmail.com",
     },
     {
       icon: <Phone size={18} />,
@@ -251,10 +249,10 @@ export default function Contact() {
                 <span>
                   {c.errorMsg}{" "}
                   <a
-                    href="mailto:irmairyani@gmail.com"
+                    href="mailto:irmairyani698@gmail.com"
                     className="underline font-medium"
                   >
-                    irmairyani@gmail.com
+                    irmairyani698@gmail.com
                   </a>
                 </span>
               </motion.div>
