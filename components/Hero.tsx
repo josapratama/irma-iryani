@@ -115,7 +115,7 @@ export default function Hero() {
                 Prabumulih, Sumatera Selatan
               </span>
               <a
-                href="mailto:irmairyani698W@gmail.com"
+                href="mailto:irmairyani698@gmail.com"
                 className="flex items-center gap-1.5 rounded-full border border-brown-light/15 bg-cream-dark/60 px-3 py-1.5 text-xs text-text-muted transition-colors hover:text-brown"
               >
                 <Mail size={12} className="shrink-0 text-brown" />
@@ -147,16 +147,50 @@ export default function Hero() {
               >
                 {c.contact}
               </motion.a>
-              <motion.a
-                href="/cv.pdf"
-                download
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="flex items-center gap-2 rounded-full border border-brown-light/30 px-6 py-2.5 text-sm font-semibold text-brown transition-colors hover:bg-brown/8"
-              >
-                <Download size={14} />
-                {c.cta}
-              </motion.a>
+
+              {/* CV dropdown */}
+              <div className="relative group">
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex items-center gap-2 rounded-full border border-brown-light/30 px-6 py-2.5 text-sm font-semibold text-brown transition-colors hover:bg-brown/8 cursor-pointer"
+                >
+                  <Download size={14} />
+                  {c.cta}
+                </motion.button>
+
+                {/* Dropdown menu */}
+                <div className="pointer-events-none absolute left-0 top-full z-20 mt-2 w-64 rounded-2xl border border-brown-light/20 bg-cream opacity-0 shadow-xl transition-all duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:translate-y-0 translate-y-1">
+                  <div className="p-2">
+                    <a
+                      href="/curriculum-vitae/pembina-kepribadian.pdf"
+                      download
+                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-text-muted transition-colors hover:bg-cream-dark hover:text-brown"
+                    >
+                      <Download size={13} className="shrink-0 text-brown" />
+                      <div>
+                        <p className="font-semibold text-text-main">
+                          CV Pembina Kepribadian
+                        </p>
+                        <p className="text-xs text-text-muted">PDF</p>
+                      </div>
+                    </a>
+                    <a
+                      href="/curriculum-vitae/pengelola-sdm.pdf"
+                      download
+                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-text-muted transition-colors hover:bg-cream-dark hover:text-brown"
+                    >
+                      <Download size={13} className="shrink-0 text-brown" />
+                      <div>
+                        <p className="font-semibold text-text-main">
+                          CV Pengelola SDM
+                        </p>
+                        <p className="text-xs text-text-muted">PDF</p>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+              </div>
             </motion.div>
 
             {/* Social media links */}
@@ -187,7 +221,7 @@ export default function Hero() {
                   src="/profile.jpg"
                   alt="Irma Iryani"
                   fill
-                  className="object-cover"
+                  className="object-cover object-center"
                   sizes="(max-width: 640px) 208px, (max-width: 768px) 256px, (max-width: 1024px) 288px, 384px"
                   priority
                 />
