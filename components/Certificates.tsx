@@ -14,7 +14,7 @@ type Certificate = {
   date: string;
   score?: string;
   category: string;
-  images: string[]; // support multiple images
+  images: string[];
 };
 
 const certificates: Certificate[] = [
@@ -111,7 +111,6 @@ const certificates: Certificate[] = [
     issuer: "Komdigi – Digital Talent Scholarship 2026",
     date: "18 Juli 2026",
     category: "Data",
-    // 2 gambar — cover sertifikat + halaman detail
     images: [
       "/certificates/cert-data-science.png",
       "/certificates/cert-data-science-detail.png",
@@ -172,6 +171,16 @@ const catColors: Record<string, { bg: string; text: string; border: string }> =
     Organization: { bg: "#dcfce7", text: "#15803d", border: "#bbf7d0" },
   };
 
+// Filter config with bilingual labels
+const FILTERS: { key: string; id: string; en: string }[] = [
+  { key: "All", id: "Semua", en: "All" },
+  { key: "Technology", id: "Teknologi", en: "Technology" },
+  { key: "Soft Skills", id: "Soft Skills", en: "Soft Skills" },
+  { key: "Professional", id: "Profesional", en: "Professional" },
+  { key: "Data", id: "Data", en: "Data" },
+  { key: "Organization", id: "Organisasi", en: "Organization" },
+];
+
 // ── Lightbox with carousel ────────────────────────────────────────────
 function CertLightbox({
   cert,
@@ -185,8 +194,8 @@ function CertLightbox({
   onClose: () => void;
 }) {
   const [idx, setIdx] = useState(startIdx);
-  const total = cert.images.length;
   const [dir, setDir] = useState(0);
+  const total = cert.images.length;
 
   const slideVariants = {
     enter: (d: number) => ({ x: d > 0 ? 80 : -80, opacity: 0 }),
@@ -206,11 +215,8 @@ function CertLightbox({
     setDir(newIdx > idx ? 1 : -1);
     setIdx(newIdx);
   };
-  const goPrev = () => go((idx - 1 + total) % total);
-  const goNext = () => go((idx + 1) % total);
 
   const cat = catColors[cert.category] ?? catColors["Soft Skills"];
-  const pageLabel = total > 1 ? `${idx + 1} / ${total}` : null;
 
   return (
     <motion.div
@@ -228,7 +234,7 @@ function CertLightbox({
         onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-2xl overflow-hidden rounded-2xl bg-cream shadow-2xl"
       >
-        {/* Close button */}
+        {/* Close */}
         <button
           onClick={onClose}
           aria-label="Tutup"
@@ -237,10 +243,10 @@ function CertLightbox({
           <X size={15} />
         </button>
 
-        {/* Page counter badge */}
-        {pageLabel && (
+        {/* Page counter */}
+        {total > 1 && (
           <div className="absolute left-3 top-3 z-20 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-            {pageLabel}
+            {idx + 1} / {total}
           </div>
         )}
 
@@ -267,18 +273,17 @@ function CertLightbox({
             </motion.div>
           </AnimatePresence>
 
-          {/* Arrow buttons — only when multiple images */}
           {total > 1 && (
             <>
               <button
-                onClick={goPrev}
+                onClick={() => go((idx - 1 + total) % total)}
                 className="absolute left-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
                 aria-label="Sebelumnya"
               >
                 <ChevronLeft size={18} />
               </button>
               <button
-                onClick={goNext}
+                onClick={() => go((idx + 1) % total)}
                 className="absolute right-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
                 aria-label="Berikutnya"
               >
@@ -288,29 +293,25 @@ function CertLightbox({
           )}
         </div>
 
-        {/* Dot indicators */}
+        {/* Dots */}
         {total > 1 && (
-          <div className="flex justify-center gap-1.5 pt-3 pb-1">
+          <div className="flex justify-center gap-1.5 pb-1 pt-3">
             {cert.images.map((_, i) => (
               <button
                 key={i}
                 onClick={() => go(i)}
                 aria-label={`Gambar ${i + 1}`}
-                className={`h-1.5 cursor-pointer rounded-full transition-all duration-200 ${
-                  i === idx
-                    ? "w-5 bg-brown"
-                    : "w-1.5 bg-brown-light/40 hover:bg-brown-light/70"
-                }`}
+                className={`h-1.5 cursor-pointer rounded-full transition-all duration-200 ${i === idx ? "w-5 bg-brown" : "w-1.5 bg-brown-light/40 hover:bg-brown-light/70"}`}
               />
             ))}
           </div>
         )}
 
-        {/* Info footer */}
+        {/* Info */}
         <div className="border-t border-brown-light/20 px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="mb-1.5 flex items-center gap-2 flex-wrap">
+              <div className="mb-1.5 flex flex-wrap items-center gap-2">
                 <span
                   className="rounded-full border px-2 py-0.5 text-xs font-medium"
                   style={{
@@ -357,6 +358,7 @@ export default function Certificates() {
     cert: Certificate;
     imgIdx: number;
   } | null>(null);
+  const [activeFilter, setActiveFilter] = useState("All");
   const { slideUp, stagger } = useMotion();
 
   const sectionTag = language === "id" ? "Sertifikat" : "Certificates";
@@ -365,6 +367,11 @@ export default function Certificates() {
       ? "Sertifikat & Penghargaan"
       : "Certificates & Achievements";
   const viewLabel = language === "id" ? "Lihat" : "View";
+
+  const filtered =
+    activeFilter === "All"
+      ? certificates
+      : certificates.filter((c) => c.category === activeFilter);
 
   return (
     <section
@@ -378,7 +385,7 @@ export default function Certificates() {
           variants={slideUp}
           initial="hidden"
           animate={inView ? "visible" : "hidden"}
-          className="mb-14 text-center"
+          className="mb-10 text-center"
         >
           <span className="text-xs font-medium uppercase tracking-widest text-brown">
             {sectionTag}
@@ -389,6 +396,54 @@ export default function Certificates() {
           <div className="section-divider" />
         </motion.div>
 
+        {/* Filter tabs */}
+        <motion.div
+          variants={slideUp}
+          initial="hidden"
+          animate={inView ? "visible" : "hidden"}
+          className="mb-8 flex flex-wrap justify-center gap-2"
+        >
+          {FILTERS.map((f) => {
+            const isActive = activeFilter === f.key;
+            const count =
+              f.key === "All"
+                ? certificates.length
+                : certificates.filter((c) => c.category === f.key).length;
+            const cat = catColors[f.key];
+            return (
+              <motion.button
+                key={f.key}
+                onClick={() => setActiveFilter(f.key)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`relative cursor-pointer rounded-full border px-4 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                  isActive
+                    ? "border-brown bg-brown text-white shadow-md shadow-brown/20"
+                    : "border-brown-light/25 bg-cream-dark/60 text-text-muted hover:border-brown/40 hover:text-text-main"
+                }`}
+              >
+                {f[language]}
+                <span
+                  className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                    isActive
+                      ? "bg-white/25 text-white"
+                      : "bg-brown-light/15 text-text-muted"
+                  }`}
+                >
+                  {count}
+                </span>
+                {isActive && cat && (
+                  <motion.span
+                    layoutId="filterLine"
+                    className="absolute -bottom-0.5 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full"
+                    style={{ backgroundColor: "#fff" }}
+                  />
+                )}
+              </motion.button>
+            );
+          })}
+        </motion.div>
+
         {/* Grid */}
         <motion.div
           variants={stagger(0.04)}
@@ -396,84 +451,105 @@ export default function Certificates() {
           animate={inView ? "visible" : "hidden"}
           className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
         >
-          {certificates.map((cert) => {
-            const cat = catColors[cert.category] ?? catColors["Soft Skills"];
-            const hasMultiple = cert.images.length > 1;
-
-            return (
-              <motion.div
-                key={cert.id}
-                variants={slideUp}
-                whileHover={{ y: -4, transition: { duration: 0.18 } }}
-                onClick={() => setSelected({ cert, imgIdx: 0 })}
-                className="group cursor-pointer overflow-hidden rounded-2xl border border-brown-light/20 bg-cream-dark transition-all duration-200 hover:border-brown/40 hover:shadow-lg"
-              >
-                {/* Thumbnail */}
-                <div className="relative h-36 w-full overflow-hidden bg-cream-dark/80">
-                  <Image
-                    src={cert.images[0]}
-                    alt={cert.title[language]}
-                    fill
-                    className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
-                  />
-
-                  {/* Multi-image badge */}
-                  {hasMultiple && (
-                    <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
-                      <Images size={10} />
-                      {cert.images.length}
-                    </div>
-                  )}
-
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-brown/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                    <span className="flex items-center gap-1.5 text-sm font-medium text-white">
-                      <ZoomIn size={16} />
-                      {viewLabel}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Card content */}
-                <div className="p-4">
-                  <div className="mb-2.5 flex items-start justify-between gap-2">
-                    <span
-                      className="shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium"
-                      style={{
-                        backgroundColor: cat.bg,
-                        color: cat.text,
-                        borderColor: cat.border,
-                      }}
-                    >
-                      {cert.category}
-                    </span>
-                    {cert.score && (
-                      <span className="text-xs font-bold text-brown">
-                        {cert.score}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="mb-1 line-clamp-2 text-sm font-bold leading-snug text-text-main">
-                    {cert.title[language]}
-                  </h3>
-                  <p className="mb-1 line-clamp-1 text-xs text-text-muted">
-                    {cert.issuer}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-brown">{cert.date}</p>
+          <AnimatePresence mode="popLayout">
+            {filtered.map((cert) => {
+              const cat = catColors[cert.category] ?? catColors["Soft Skills"];
+              const hasMultiple = cert.images.length > 1;
+              return (
+                <motion.div
+                  key={cert.id}
+                  layout
+                  variants={slideUp}
+                  initial="hidden"
+                  animate="visible"
+                  exit={{
+                    opacity: 0,
+                    scale: 0.88,
+                    transition: { duration: 0.18 },
+                  }}
+                  whileHover={{ y: -4, transition: { duration: 0.18 } }}
+                  onClick={() => setSelected({ cert, imgIdx: 0 })}
+                  className="group cursor-pointer overflow-hidden rounded-2xl border border-brown-light/20 bg-cream-dark transition-all duration-200 hover:border-brown/40 hover:shadow-lg"
+                >
+                  {/* Thumbnail */}
+                  <div className="relative h-36 w-full overflow-hidden bg-cream-dark/80">
+                    <Image
+                      src={cert.images[0]}
+                      alt={cert.title[language]}
+                      fill
+                      className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
+                    />
                     {hasMultiple && (
-                      <span className="flex items-center gap-1 text-xs text-text-muted">
-                        <Images size={11} className="text-brown-light" />
-                        {cert.images.length} foto
-                      </span>
+                      <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
+                        <Images size={10} />
+                        {cert.images.length}
+                      </div>
                     )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-brown/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-white">
+                        <ZoomIn size={16} />
+                        {viewLabel}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            );
-          })}
+
+                  {/* Card content */}
+                  <div className="p-4">
+                    <div className="mb-2.5 flex items-start justify-between gap-2">
+                      <span
+                        className="shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium"
+                        style={{
+                          backgroundColor: cat.bg,
+                          color: cat.text,
+                          borderColor: cat.border,
+                        }}
+                      >
+                        {cert.category}
+                      </span>
+                      {cert.score && (
+                        <span className="text-xs font-bold text-brown">
+                          {cert.score}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="mb-1 line-clamp-2 text-sm font-bold leading-snug text-text-main">
+                      {cert.title[language]}
+                    </h3>
+                    <p className="mb-1 line-clamp-1 text-xs text-text-muted">
+                      {cert.issuer}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-brown">{cert.date}</p>
+                      {hasMultiple && (
+                        <span className="flex items-center gap-1 text-xs text-text-muted">
+                          <Images size={11} className="text-brown-light" />
+                          {cert.images.length} foto
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </motion.div>
+
+        {/* Empty state */}
+        <AnimatePresence>
+          {filtered.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="py-16 text-center text-text-muted text-sm"
+            >
+              {language === "id"
+                ? "Tidak ada sertifikat ditemukan."
+                : "No certificates found."}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Lightbox */}
