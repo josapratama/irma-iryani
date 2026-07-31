@@ -17,6 +17,20 @@ const photos = {
         en: "PLP Student Departure Ceremony",
       },
     },
+    {
+      src: "/experiences/exp-plp-ceremony-2.png",
+      caption: {
+        id: "Dokumentasi Kegiatan PLP",
+        en: "PLP Activity Documentation",
+      },
+    },
+    {
+      src: "/experiences/exp-plp-ceremony-3.png",
+      caption: {
+        id: "Kegiatan Praktik Mengajar PLP",
+        en: "PLP Teaching Practice Activity",
+      },
+    },
   ],
   org: [
     {
