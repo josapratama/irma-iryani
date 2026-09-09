@@ -163,29 +163,29 @@ export default function Hero() {
                 <div className="pointer-events-none absolute left-0 top-full z-20 mt-2 w-64 rounded-2xl border border-brown-light/20 bg-cream opacity-0 shadow-xl transition-all duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:translate-y-0 translate-y-1">
                   <div className="p-2">
                     <a
-                      href="/curriculum-vitae/pembina-kepribadian.pdf"
+                      href="/curriculum-vitae/bps-asisten-statistisi.pdf"
                       download
                       className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-text-muted transition-colors hover:bg-cream-dark hover:text-brown"
                     >
                       <Download size={13} className="shrink-0 text-brown" />
                       <div>
                         <p className="font-semibold text-text-main">
-                          CV Pembina Kepribadian
+                          CV Asisten Statistisi
                         </p>
-                        <p className="text-xs text-text-muted">PDF</p>
+                        <p className="text-xs text-text-muted">PDF · BPS</p>
                       </div>
                     </a>
                     <a
-                      href="/curriculum-vitae/pengelola-sdm.pdf"
+                      href="/curriculum-vitae/bps-pranata-komputer.pdf"
                       download
                       className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-text-muted transition-colors hover:bg-cream-dark hover:text-brown"
                     >
                       <Download size={13} className="shrink-0 text-brown" />
                       <div>
                         <p className="font-semibold text-text-main">
-                          CV Pengelola SDM
+                          CV Pranata Komputer
                         </p>
-                        <p className="text-xs text-text-muted">PDF</p>
+                        <p className="text-xs text-text-muted">PDF · BPS</p>
                       </div>
                     </a>
                   </div>
