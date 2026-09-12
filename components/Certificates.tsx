@@ -30,6 +30,7 @@ type Certificate = {
   score?: string;
   category: string;
   images: string[];
+  pdfPath?: string;
 };
 
 const certificates: Certificate[] = [
@@ -151,7 +152,7 @@ const certificates: Certificate[] = [
     issuer: "Himpunan Mahasiswa Kimia UNSRI",
     date: "11 November 2023",
     category: "Organization",
-    images: ["/certificates/cert-aec.png"],
+    images: ["/certificates/cert-aec.png", "/certificates/cert-aec-2.png"],
   },
   {
     id: 11,
@@ -223,6 +224,18 @@ const certificates: Certificate[] = [
       "/certificates/cert-karirnex-ms-office-detail.png",
     ],
   },
+  {
+    id: 17,
+    title: {
+      id: "Memulai Pemrograman dengan Python",
+      en: "Getting Started with Python Programming",
+    },
+    issuer: "Dicoding Indonesia",
+    date: "2026",
+    category: "Technology",
+    images: [],
+    pdfPath: "/certificates/cert-python-programming.pdf",
+  },
 ];
 
 // ─────────────────────────────────────────────
@@ -291,6 +304,20 @@ const projects: Project[] = [
     tags: ["Microsoft Excel", "Microsoft Word", "PowerPoint", "Dashboard"],
     pdfPath: "/projects/portofolio-excel-word-ppt.pdf",
     fileName: "portofolio-excel-word-ppt.pdf",
+  },
+  {
+    id: 2,
+    title: {
+      id: "Portofolio Project Data Analyst",
+      en: "Data Analyst Project Portfolio",
+    },
+    description: {
+      id: "Kumpulan proyek analisis data mencakup eksplorasi data, visualisasi, dan pengolahan dataset menggunakan tools analitik.",
+      en: "A collection of data analysis projects including data exploration, visualization, and dataset processing using analytics tools.",
+    },
+    tags: ["Data Analysis", "Visualization", "Excel", "SQL"],
+    pdfPath: "/projects/portofolio-data-analyst.pdf",
+    fileName: "portofolio-data-analyst.pdf",
   },
 ];
 
@@ -790,29 +817,52 @@ export default function Certificates() {
                       transition: { duration: 0.18 },
                     }}
                     whileHover={{ y: -4, transition: { duration: 0.18 } }}
-                    onClick={() => setSelected({ cert, imgIdx: 0 })}
+                    onClick={() =>
+                      cert.images.length > 0
+                        ? setSelected({ cert, imgIdx: 0 })
+                        : cert.pdfPath
+                          ? window.open(cert.pdfPath, "_blank")
+                          : undefined
+                    }
                     className="group cursor-pointer overflow-hidden rounded-2xl border border-brown-light/20 bg-cream-dark transition-all duration-200 hover:border-brown/40 hover:shadow-lg"
                   >
                     <div className="relative h-36 w-full overflow-hidden bg-cream-dark/80">
-                      <Image
-                        src={cert.images[0]}
-                        alt={cert.title[language]}
-                        fill
-                        className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
-                      />
-                      {hasMultiple && (
-                        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
-                          <Images size={10} />
-                          {cert.images.length}
+                      {cert.images.length > 0 ? (
+                        <>
+                          <Image
+                            src={cert.images[0]}
+                            alt={cert.title[language]}
+                            fill
+                            className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
+                          />
+                          {hasMultiple && (
+                            <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
+                              <Images size={10} />
+                              {cert.images.length}
+                            </div>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center bg-brown/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                            <span className="flex items-center gap-1.5 text-sm font-medium text-white">
+                              <ZoomIn size={16} />
+                              {c.view}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="relative flex h-full w-full flex-col items-center justify-center gap-2 bg-brown/5">
+                          <FileText size={36} className="text-brown/40" />
+                          <span className="text-xs font-medium text-brown/60">
+                            PDF
+                          </span>
+                          <div className="absolute inset-0 flex items-center justify-center bg-brown/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                            <span className="flex items-center gap-1.5 text-sm font-medium text-white">
+                              <ExternalLink size={16} />
+                              {c.open ?? "Open PDF"}
+                            </span>
+                          </div>
                         </div>
                       )}
-                      <div className="absolute inset-0 flex items-center justify-center bg-brown/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                        <span className="flex items-center gap-1.5 text-sm font-medium text-white">
-                          <ZoomIn size={16} />
-                          {c.view}
-                        </span>
-                      </div>
                     </div>
                     <div className="p-4">
                       <div className="mb-2.5 flex items-start justify-between gap-2">
