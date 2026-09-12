@@ -63,6 +63,7 @@ const content = {
       points: [
         "Melaksanakan praktik mengajar, membimbing, dan berinteraksi secara langsung dengan siswa dalam proses pembelajaran.",
         "Mengembangkan kemampuan komunikasi, adaptasi, dan pengelolaan kelas.",
+        "Berjaga di ruang Tata Usaha (TU) untuk mendata siswa yang tidak masuk sekolah per kelas, siswa izin keluar sekolah apabila ada keperluan mendesak, tamu, dan pendataan pembagian MBG.",
       ],
     },
     org: {
@@ -130,6 +131,7 @@ const content = {
       points: [
         "Conducted teaching practice, mentoring, and directly interacted with students in the learning process.",
         "Developed communication, adaptation, and classroom management skills.",
+        "Served at the Administrative Office (TU) to record student absences per class, students requesting early dismissal for urgent matters, visitors, and Free Nutritious Meal (MBG) distribution data.",
       ],
     },
     org: {

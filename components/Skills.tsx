@@ -28,6 +28,8 @@ const content = {
         { name: "Microsoft Excel", level: 85 },
         { name: "Microsoft PowerPoint", level: 88 },
         { name: "Copywriting", level: 80 },
+        { name: "Graphic Design", level: 75 },
+        { name: "Data Analysis", level: 72 },
       ],
     },
     languages: {
@@ -70,6 +72,8 @@ const content = {
         { name: "Microsoft Excel", level: 85 },
         { name: "Microsoft PowerPoint", level: 88 },
         { name: "Copywriting", level: 80 },
+        { name: "Graphic Design", level: 75 },
+        { name: "Data Analysis", level: 72 },
       ],
     },
     languages: {

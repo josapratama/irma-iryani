@@ -1070,15 +1070,24 @@ export default function Certificates() {
                 whileHover={{ y: -3, transition: { duration: 0.18 } }}
                 className="overflow-hidden rounded-2xl border border-brown-light/20 bg-cream-dark transition-all duration-200 hover:border-brown/40 hover:shadow-lg"
               >
-                {/* PDF icon banner */}
-                <div className="flex h-32 w-full items-center justify-center bg-gradient-to-br from-brown/10 via-cream-dark to-brown-light/10">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-brown-light/30 bg-cream shadow-md">
-                      <FileText size={28} className="text-brown" />
-                    </div>
-                    <span className="rounded-full border border-brown-light/30 bg-cream px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brown">
-                      PDF
-                    </span>
+                {/* PDF preview thumbnail */}
+                <div className="group relative h-40 w-full overflow-hidden bg-cream-dark/80">
+                  <PdfThumbnail
+                    pdfUrl={project.pdfPath}
+                    className="h-full w-full"
+                  />
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-brown/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <a
+                      href={project.pdfPath}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-sm font-medium text-white"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ExternalLink size={16} />
+                      {c.open}
+                    </a>
                   </div>
                 </div>
 
