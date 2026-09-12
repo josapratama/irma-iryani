@@ -18,6 +18,7 @@ import {
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
 import { useMotion } from "@/lib/motion";
 import Image from "next/image";
+import PdfThumbnail from "@/components/PdfThumbnail";
 
 // ─────────────────────────────────────────────
 // CERTIFICATES DATA
@@ -850,11 +851,20 @@ export default function Certificates() {
                           </div>
                         </>
                       ) : (
-                        <div className="relative flex h-full w-full flex-col items-center justify-center gap-2 bg-brown/5">
-                          <FileText size={36} className="text-brown/40" />
-                          <span className="text-xs font-medium text-brown/60">
-                            PDF
-                          </span>
+                        <div className="relative h-full w-full overflow-hidden">
+                          {cert.pdfPath ? (
+                            <PdfThumbnail
+                              pdfUrl={cert.pdfPath}
+                              className="h-full w-full"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-brown/5">
+                              <FileText size={36} className="text-brown/40" />
+                              <span className="text-xs font-medium text-brown/60">
+                                PDF
+                              </span>
+                            </div>
+                          )}
                           <div className="absolute inset-0 flex items-center justify-center bg-brown/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                             <span className="flex items-center gap-1.5 text-sm font-medium text-white">
                               <ExternalLink size={16} />
