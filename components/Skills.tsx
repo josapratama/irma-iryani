@@ -2,43 +2,18 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Brain, Wrench, Globe } from "lucide-react";
+import { Brain, Wrench, Globe, RefreshCw } from "lucide-react";
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
 import { useMotion } from "@/lib/motion";
+import { useSkills } from "@/hooks/useSkills";
 
+// ─────────────────────────────────────────────
+// STATIC CONTENT (labels & trainings hanya teks, tidak perlu API)
+// ─────────────────────────────────────────────
 const content = {
   id: {
     sectionTag: "Kompetensi",
     title: "Keahlian",
-    softSkills: {
-      label: "Soft Skill",
-      items: [
-        { name: "Problem Solving", level: 88 },
-        { name: "Critical Thinking", level: 85 },
-        { name: "Teamwork", level: 92 },
-        { name: "Time Management", level: 80 },
-        { name: "Strategic Planning", level: 78 },
-        { name: "Communication Skills", level: 90 },
-      ],
-    },
-    hardSkills: {
-      label: "Hard Skill",
-      items: [
-        { name: "Microsoft Word", level: 90 },
-        { name: "Microsoft Excel", level: 85 },
-        { name: "Microsoft PowerPoint", level: 88 },
-        { name: "Copywriting", level: 80 },
-        { name: "Graphic Design", level: 75 },
-        { name: "Data Analysis", level: 72 },
-      ],
-    },
-    languages: {
-      label: "Bahasa",
-      items: [
-        { name: "Bahasa Indonesia", level: 98, note: "Fasih" },
-        { name: "English", level: 50, note: "Dasar" },
-      ],
-    },
     trainingLabel: "Pelatihan",
     trainings: [
       "Digital Disruption & Transformation",
@@ -54,35 +29,6 @@ const content = {
   en: {
     sectionTag: "Competencies",
     title: "Skills",
-    softSkills: {
-      label: "Soft Skills",
-      items: [
-        { name: "Problem Solving", level: 88 },
-        { name: "Critical Thinking", level: 85 },
-        { name: "Teamwork", level: 92 },
-        { name: "Time Management", level: 80 },
-        { name: "Strategic Planning", level: 78 },
-        { name: "Communication Skills", level: 90 },
-      ],
-    },
-    hardSkills: {
-      label: "Hard Skills",
-      items: [
-        { name: "Microsoft Word", level: 90 },
-        { name: "Microsoft Excel", level: 85 },
-        { name: "Microsoft PowerPoint", level: 88 },
-        { name: "Copywriting", level: 80 },
-        { name: "Graphic Design", level: 75 },
-        { name: "Data Analysis", level: 72 },
-      ],
-    },
-    languages: {
-      label: "Languages",
-      items: [
-        { name: "Bahasa Indonesia", level: 98, note: "Native" },
-        { name: "English", level: 50, note: "Basic" },
-      ],
-    },
     trainingLabel: "Trainings",
     trainings: [
       "Digital Disruption & Transformation",
@@ -97,6 +43,9 @@ const content = {
   },
 };
 
+// ─────────────────────────────────────────────
+// SKILL BAR
+// ─────────────────────────────────────────────
 function SkillBar({
   name,
   level,
@@ -119,38 +68,69 @@ function SkillBar({
         </span>
         <span className="text-xs font-semibold text-brown">{level}%</span>
       </div>
-      <div className="skill-track">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-brown-light/20">
         <motion.div
-          className="skill-fill"
+          className="h-full rounded-full bg-brown"
           initial={{ width: 0 }}
-          animate={inView ? { width: `${level}%` } : { width: 0 }}
-          transition={{ duration: 0.75, ease: "easeOut" }}
+          animate={{ width: inView ? `${level}%` : 0 }}
+          transition={{ duration: 0.9, ease: "easeOut", delay: 0.1 }}
         />
       </div>
     </div>
   );
 }
 
+// ─────────────────────────────────────────────
+// SKELETON
+// ─────────────────────────────────────────────
+function SkillSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i}>
+          <div className="mb-1.5 flex justify-between">
+            <div className="h-3 w-32 rounded bg-brown-light/15" />
+            <div className="h-3 w-8 rounded bg-brown-light/10" />
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-brown-light/10" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────
 export default function Skills() {
   const { language } = useThemeLanguage();
   const c = content[language];
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
-  const { slideUp, stagger } = useMotion();
+  const { slideUp, slideLeft, slideRight, stagger } = useMotion();
 
-  const groups = [
-    { Icon: Brain, label: c.softSkills.label, items: c.softSkills.items },
-    { Icon: Wrench, label: c.hardSkills.label, items: c.hardSkills.items },
-    { Icon: Globe, label: c.languages.label, items: c.languages.items },
-  ];
+  // Fetch semua skill groups sekaligus
+  const { status, data: skillGroups, error, refetch } = useSkills();
+
+  // Pisahkan berdasar category dari response API
+  const softGroup = skillGroups?.find((g) => g.category === "soft");
+  const hardGroup = skillGroups?.find((g) => g.category === "hard");
+
+  // Language group jika ada di API (opsional — bisa di-extend nanti)
+  const langGroup = skillGroups?.find(
+    (g) =>
+      g.label?.id?.toLowerCase().includes("bahasa") ||
+      g.label?.en?.toLowerCase().includes("language"),
+  );
 
   return (
     <section
       id="skills"
-      className="section-shell bg-cream-dark pt-10 pb-20 md:pt-14 md:pb-24 px-4 sm:px-6 lg:px-8"
+      className="section-shell pt-10 pb-20 md:pt-14 md:pb-24 px-4 sm:px-6 lg:px-8"
       ref={ref}
     >
       <div className="mx-auto max-w-6xl">
+        {/* Heading */}
         <motion.div
           variants={slideUp}
           initial="hidden"
@@ -166,60 +146,166 @@ export default function Skills() {
           <div className="section-divider" />
         </motion.div>
 
-        <motion.div
-          variants={stagger(0.1)}
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          className="mb-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3"
-        >
-          {groups.map(({ Icon, label, items }) => (
-            <motion.div
-              key={label}
-              variants={slideUp}
-              className="rounded-2xl border border-brown-light/20 bg-cream p-5 sm:p-6"
+        {/* Error state */}
+        {status === "error" && (
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <p className="text-sm text-text-muted">
+              {error ??
+                (language === "id"
+                  ? "Gagal memuat data keahlian"
+                  : "Failed to load skills")}
+            </p>
+            <button
+              onClick={refetch}
+              className="flex items-center gap-1.5 rounded-full border border-brown-light/30 px-4 py-1.5 text-xs font-medium text-brown transition-colors hover:bg-brown/5"
             >
-              <div className="mb-5 flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brown/10">
-                  <Icon size={17} className="text-brown" />
-                </div>
-                <h3 className="font-bold text-text-main">{label}</h3>
-              </div>
-              <div className="space-y-4">
-                {items.map((item) => (
-                  <SkillBar key={item.name} {...item} inView={inView} />
-                ))}
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+              <RefreshCw size={12} />
+              {language === "id" ? "Coba lagi" : "Retry"}
+            </button>
+          </div>
+        )}
 
-        {/* Trainings */}
-        <motion.div
-          variants={slideUp}
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          className="text-center"
-        >
-          <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-muted">
-            {c.trainingLabel}
-          </p>
+        {/* Main grid */}
+        {status !== "error" && (
           <motion.div
-            variants={stagger(0.06)}
+            variants={stagger(0.1)}
             initial="hidden"
             animate={inView ? "visible" : "hidden"}
-            className="flex flex-wrap justify-center gap-3"
+            className="grid gap-8 md:grid-cols-3"
           >
-            {c.trainings.map((t) => (
-              <motion.span
-                key={t}
-                variants={slideUp}
-                className="rounded-full border border-brown-light/30 bg-cream px-4 py-2 text-sm text-text-muted"
-              >
-                {t}
-              </motion.span>
-            ))}
+            {/* ── Soft Skills ─────────────────────────────── */}
+            <motion.div
+              variants={slideLeft}
+              className="rounded-2xl border border-brown-light/20 bg-cream-dark p-6"
+            >
+              <div className="mb-5 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brown/10">
+                  <Brain size={16} className="text-brown" />
+                </div>
+                <h3 className="font-semibold text-text-main">
+                  {softGroup
+                    ? softGroup.label[language]
+                    : language === "id"
+                      ? "Soft Skill"
+                      : "Soft Skills"}
+                </h3>
+              </div>
+              <div className="space-y-4">
+                {status === "loading" ? (
+                  <SkillSkeleton />
+                ) : (
+                  (softGroup?.items ?? []).map((item) => (
+                    <SkillBar
+                      key={item.name}
+                      name={item.name}
+                      level={item.level}
+                      inView={inView}
+                    />
+                  ))
+                )}
+              </div>
+            </motion.div>
+
+            {/* ── Hard Skills ─────────────────────────────── */}
+            <motion.div
+              variants={slideUp}
+              className="rounded-2xl border border-brown-light/20 bg-cream-dark p-6"
+            >
+              <div className="mb-5 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brown/10">
+                  <Wrench size={16} className="text-brown" />
+                </div>
+                <h3 className="font-semibold text-text-main">
+                  {hardGroup
+                    ? hardGroup.label[language]
+                    : language === "id"
+                      ? "Hard Skill"
+                      : "Hard Skills"}
+                </h3>
+              </div>
+              <div className="space-y-4">
+                {status === "loading" ? (
+                  <SkillSkeleton />
+                ) : (
+                  (hardGroup?.items ?? []).map((item) => (
+                    <SkillBar
+                      key={item.name}
+                      name={item.name}
+                      level={item.level}
+                      inView={inView}
+                    />
+                  ))
+                )}
+              </div>
+            </motion.div>
+
+            {/* ── Bahasa + Pelatihan ───────────────────────── */}
+            <motion.div variants={slideRight} className="space-y-6">
+              {/* Bahasa */}
+              <div className="rounded-2xl border border-brown-light/20 bg-cream-dark p-6">
+                <div className="mb-5 flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brown/10">
+                    <Globe size={16} className="text-brown" />
+                  </div>
+                  <h3 className="font-semibold text-text-main">
+                    {langGroup
+                      ? langGroup.label[language]
+                      : language === "id"
+                        ? "Bahasa"
+                        : "Languages"}
+                  </h3>
+                </div>
+                <div className="space-y-4">
+                  {status === "loading" ? (
+                    <SkillSkeleton />
+                  ) : langGroup ? (
+                    langGroup.items.map((item) => (
+                      <SkillBar
+                        key={item.name}
+                        name={item.name}
+                        level={item.level}
+                        inView={inView}
+                      />
+                    ))
+                  ) : (
+                    // Fallback statis bahasa jika tidak ada di API
+                    <>
+                      <SkillBar
+                        name="Bahasa Indonesia"
+                        level={98}
+                        note={language === "id" ? "Fasih" : "Native"}
+                        inView={inView}
+                      />
+                      <SkillBar
+                        name="English"
+                        level={50}
+                        note={language === "id" ? "Dasar" : "Basic"}
+                        inView={inView}
+                      />
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Pelatihan */}
+              <div className="rounded-2xl border border-brown-light/20 bg-cream-dark p-6">
+                <h3 className="mb-4 font-semibold text-text-main">
+                  {c.trainingLabel}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {c.trainings.map((t) => (
+                    <span
+                      key={t}
+                      className="rounded-full border border-brown-light/25 bg-cream px-3 py-1 text-xs font-medium text-brown"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
+        )}
       </div>
     </section>
   );

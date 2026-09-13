@@ -1,209 +1,53 @@
 "use client";
 
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
-import { Award, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Award, X, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
 import { useMotion } from "@/lib/motion";
 import Image from "next/image";
+import { useExperiences } from "@/hooks/useExperiences";
+import type { Experience, ExperienceImage } from "@/lib/api";
 
-// Photos for each experience item
-const photos = {
-  internship: [
-    {
-      src: "/experiences/exp-plp-ceremony.jpeg",
-      caption: {
-        id: "Upacara Pelepasan Mahasiswa PLP",
-        en: "PLP Student Departure Ceremony",
-      },
-    },
-    {
-      src: "/experiences/exp-plp-ceremony-2.png",
-      caption: {
-        id: "Dokumentasi Kegiatan PLP",
-        en: "PLP Activity Documentation",
-      },
-    },
-    {
-      src: "/experiences/exp-plp-ceremony-3.png",
-      caption: {
-        id: "Kegiatan Praktik Mengajar PLP",
-        en: "PLP Teaching Practice Activity",
-      },
-    },
-  ],
-  org: [
-    {
-      src: "/experiences/exp-hmk-members.png",
-      caption: {
-        id: "Foto Bersama Anggota HMK UNSRI",
-        en: "Group Photo with HMK UNSRI Members",
-      },
-    },
-    {
-      src: "/experiences/exp-hmk-members-2.png",
-      caption: {
-        id: "Dokumentasi Kegiatan HMK UNSRI",
-        en: "HMK UNSRI Activity Documentation",
-      },
-    },
-  ],
-};
-
-const content = {
+// ─────────────────────────────────────────────
+// STATIC UI LABELS
+// ─────────────────────────────────────────────
+const uiLabels = {
   id: {
     sectionTag: "Pengalaman",
     title: "Pengalaman & Organisasi",
     photoLabel: "Dokumentasi",
-    internship: {
-      label: "Magang",
-      title: "Mahasiswa Praktik PLP Pendidikan Kimia",
-      org: "SMA Negeri 1 Indralaya Utara",
-      period: "Oktober 2025 – November 2025",
-      points: [
-        "Melaksanakan praktik mengajar, membimbing, dan berinteraksi secara langsung dengan siswa dalam proses pembelajaran.",
-        "Mengembangkan kemampuan komunikasi, adaptasi, dan pengelolaan kelas.",
-        "Berjaga di ruang Tata Usaha (TU) untuk mendata siswa yang tidak masuk sekolah per kelas, siswa izin keluar sekolah apabila ada keperluan mendesak, tamu, dan pendataan pembagian MBG.",
-      ],
-    },
-    org: {
-      label: "Organisasi",
-      title: "Anggota Aktif",
-      org: "Himpunan Mahasiswa Kimia (HMK)",
-      period: "2022 – 2024",
-      points: [
-        "Aktif berpartisipasi dalam kegiatan organisasi sebagai bentuk pengembangan diri dan kontribusi akademik.",
-        "Berkontribusi dalam berbagai kegiatan yang mendukung peningkatan kemampuan kerja sama tim dan komunikasi.",
-        "Mengembangkan sikap tanggung jawab, disiplin, dan kemampuan beradaptasi dalam lingkungan organisasi.",
-      ],
-    },
-    committee: {
-      label: "Kepanitiaan",
-      events: [
-        {
-          title: "Webinar Beasiswa Unggulan",
-          role: "Divisi Media Partner",
-          period: "Juni 2023",
-          points: [
-            "Menjalin kerja sama dengan media partner untuk mendukung publikasi kegiatan.",
-            "Membantu memperluas jangkauan informasi dan meningkatkan partisipasi peserta.",
-          ],
-        },
-        {
-          title: "ARUVENA Education Class (AEC)",
-          role: "Divisi Humas",
-          period: "November 2023",
-          points: [
-            "Menyusun dan menyebarkan surat undangan kepada dosen dan organisasi terkait.",
-            "Melakukan publikasi kegiatan melalui penyebaran pamflet sebelum dan saat acara berlangsung.",
-          ],
-        },
-        {
-          title: "BIRUNI (Bincang Asik Bareng Alumni)",
-          role: "Divisi Humas",
-          period: "Juli 2023",
-          points: [
-            "Bertanggung jawab dalam penyebaran surat undangan kepada dosen dan pihak terkait.",
-            "Menjalin komunikasi dengan peserta dan pihak eksternal untuk mendukung kelancaran acara.",
-          ],
-        },
-        {
-          title: "Dies Natalis HMK ke-38",
-          role: "Divisi Transportasi",
-          period: "Mei 2024",
-          points: [
-            "Mengatur dan mengoordinasikan kebutuhan transportasi kegiatan.",
-            "Memastikan kelancaran mobilisasi panitia, tamu, dan perlengkapan acara.",
-          ],
-        },
-      ],
-    },
+    committeeLabel: "Kepanitiaan",
+    retryLabel: "Coba lagi",
+    errorMsg: "Gagal memuat data pengalaman",
   },
   en: {
     sectionTag: "Experience",
     title: "Experience & Organization",
     photoLabel: "Documentation",
-    internship: {
-      label: "Internship",
-      title: "PLP Chemistry Education Student Practice",
-      org: "SMA Negeri 1 Indralaya Utara",
-      period: "October 2025 – November 2025",
-      points: [
-        "Conducted teaching practice, mentoring, and directly interacted with students in the learning process.",
-        "Developed communication, adaptation, and classroom management skills.",
-        "Served at the Administrative Office (TU) to record student absences per class, students requesting early dismissal for urgent matters, visitors, and Free Nutritious Meal (MBG) distribution data.",
-      ],
-    },
-    org: {
-      label: "Organization",
-      title: "Active Member",
-      org: "Chemistry Student Association (HMK)",
-      period: "2022 – 2024",
-      points: [
-        "Actively participated in organizational activities for self-development and academic contribution.",
-        "Contributed to various activities supporting teamwork and communication improvement.",
-        "Developed responsibility, discipline, and adaptability in the organizational environment.",
-      ],
-    },
-    committee: {
-      label: "Committee",
-      events: [
-        {
-          title: "Webinar Beasiswa Unggulan",
-          role: "Media Partner Division",
-          period: "June 2023",
-          points: [
-            "Established cooperation with media partners to support event publication.",
-            "Helped expand information reach and increase participant engagement.",
-          ],
-        },
-        {
-          title: "ARUVENA Education Class (AEC)",
-          role: "Public Relations Division",
-          period: "November 2023",
-          points: [
-            "Drafted and distributed invitation letters to lecturers and related organizations.",
-            "Performed event publication through flyer distribution before and during the event.",
-          ],
-        },
-        {
-          title: "BIRUNI (Alumni Discussion Event)",
-          role: "Public Relations Division",
-          period: "July 2023",
-          points: [
-            "Responsible for distributing invitation letters to lecturers and related parties.",
-            "Maintained communication with participants and external parties to ensure event success.",
-          ],
-        },
-        {
-          title: "HMK 38th Anniversary",
-          role: "Transportation Division",
-          period: "May 2024",
-          points: [
-            "Arranged and coordinated transportation needs for the event.",
-            "Ensured smooth mobilization of committee, guests, and event equipment.",
-          ],
-        },
-      ],
-    },
+    committeeLabel: "Committee",
+    retryLabel: "Retry",
+    errorMsg: "Failed to load experience data",
   },
 };
 
-// ── Photo lightbox ────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// PHOTO LIGHTBOX
+// ─────────────────────────────────────────────
 function Lightbox({
-  photos: imgs,
+  photos,
   startIndex,
   lang,
   onClose,
 }: {
-  photos: { src: string; caption: { id: string; en: string } }[];
+  photos: ExperienceImage[];
   startIndex: number;
   lang: "id" | "en";
   onClose: () => void;
 }) {
   const [idx, setIdx] = useState(startIndex);
-  const prev = () => setIdx((i) => (i - 1 + imgs.length) % imgs.length);
-  const next = () => setIdx((i) => (i + 1) % imgs.length);
+  const prev = () => setIdx((i) => (i - 1 + photos.length) % photos.length);
+  const next = () => setIdx((i) => (i + 1) % photos.length);
 
   return (
     <motion.div
@@ -221,7 +65,6 @@ function Lightbox({
         onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-3xl overflow-hidden rounded-2xl bg-cream shadow-2xl"
       >
-        {/* Close */}
         <button
           onClick={onClose}
           aria-label="Tutup"
@@ -230,45 +73,45 @@ function Lightbox({
           <X size={16} />
         </button>
 
-        {/* Image */}
         <div className="relative aspect-video w-full bg-cream-dark">
           <Image
-            src={imgs[idx].src}
-            alt={imgs[idx].caption[lang]}
+            src={photos[idx].src}
+            alt={photos[idx].caption[lang]}
             fill
             className="object-cover"
             sizes="768px"
           />
-          {/* Gradient overlay for caption */}
-          <div className="absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-black/60 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
           <p className="absolute bottom-4 left-4 right-12 text-sm font-medium text-white drop-shadow">
-            {imgs[idx].caption[lang]}
+            {photos[idx].caption[lang]}
           </p>
         </div>
 
-        {/* Nav arrows (only if multiple photos) */}
-        {imgs.length > 1 && (
+        {photos.length > 1 && (
           <>
             <button
               onClick={prev}
               className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+              aria-label="Sebelumnya"
             >
               <ChevronLeft size={18} />
             </button>
             <button
               onClick={next}
               className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+              aria-label="Berikutnya"
             >
               <ChevronRight size={18} />
             </button>
-            {/* Dots */}
-            <div className="flex justify-center gap-1.5 py-3">
-              {imgs.map((_, i) => (
+            <div className="flex justify-center gap-1.5 py-3 bg-cream">
+              {photos.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setIdx(i)}
-                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                    i === idx ? "w-5 bg-brown" : "w-1.5 bg-brown-light/40"
+                  className={`h-1.5 rounded-full cursor-pointer transition-all duration-200 ${
+                    i === idx
+                      ? "w-5 bg-brown"
+                      : "w-1.5 bg-brown-light/40 hover:bg-brown-light/70"
                   }`}
                 />
               ))}
@@ -280,18 +123,21 @@ function Lightbox({
   );
 }
 
-// ── Photo strip thumbnail ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// PHOTO STRIP COMPONENT
+// ─────────────────────────────────────────────
 function PhotoStrip({
-  photoKey,
-  lang,
+  photos,
   label,
+  lang,
 }: {
-  photoKey: keyof typeof photos;
-  lang: "id" | "en";
+  photos: ExperienceImage[];
   label: string;
+  lang: "id" | "en";
 }) {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
-  const imgs = photos[photoKey];
+
+  if (!photos.length) return null;
 
   return (
     <>
@@ -300,58 +146,93 @@ function PhotoStrip({
           <span className="inline-block h-px w-4 bg-brown" />
           {label}
         </p>
-        <div className="flex flex-wrap gap-2">
-          {imgs.map((img, i) => (
-            <motion.button
+        <div className="grid grid-cols-3 gap-2">
+          {photos.map((photo, i) => (
+            <div
               key={i}
               onClick={() => setLightboxIdx(i)}
-              whileHover={{ scale: 1.04, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              className="group relative h-20 w-32 cursor-pointer overflow-hidden rounded-xl border-2 border-brown-light/20 hover:border-brown/50 transition-all duration-200 shadow-sm hover:shadow-md"
+              className="group relative aspect-video cursor-pointer overflow-hidden rounded-lg"
             >
               <Image
-                src={img.src}
-                alt={img.caption[lang]}
+                src={photo.src}
+                alt={photo.caption[lang]}
                 fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                sizes="128px"
+                className="object-cover transition-transform duration-300 group-hover:scale-110"
+                sizes="120px"
               />
-              {/* Hover overlay */}
-              <div className="absolute inset-0 flex items-center justify-center bg-brown/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-white">
                   Lihat
                 </span>
               </div>
-            </motion.button>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Lightbox */}
-      {lightboxIdx !== null && (
-        <Lightbox
-          photos={imgs}
-          startIndex={lightboxIdx}
-          lang={lang}
-          onClose={() => setLightboxIdx(null)}
-        />
-      )}
+      <AnimatePresence>
+        {lightboxIdx !== null && (
+          <Lightbox
+            photos={photos}
+            startIndex={lightboxIdx}
+            lang={lang}
+            onClose={() => setLightboxIdx(null)}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────
-export default function Experience() {
+// ─────────────────────────────────────────────
+// SKELETON
+// ─────────────────────────────────────────────
+function ExperienceSkeleton() {
+  return (
+    <div className="space-y-6">
+      {[1, 2].map((i) => (
+        <div
+          key={i}
+          className="animate-pulse rounded-2xl border border-brown-light/20 bg-cream-dark p-5"
+        >
+          <div className="mb-4 h-44 w-full rounded-xl bg-brown-light/10" />
+          <div className="space-y-2">
+            <div className="h-4 w-1/2 rounded bg-brown-light/15" />
+            <div className="h-3 w-3/4 rounded bg-brown-light/10" />
+            <div className="h-3 w-full rounded bg-brown-light/10" />
+            <div className="h-3 w-5/6 rounded bg-brown-light/10" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────
+export default function ExperienceSection() {
   const { language } = useThemeLanguage();
-  const c = content[language];
+  const c = uiLabels[language];
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
-  const { slideUp, stagger } = useMotion();
+  const { slideUp, slideLeft, slideRight, stagger } = useMotion();
+
+  const { status, data: experiences, error, refetch } = useExperiences();
+
+  const internship = experiences?.find((e) => e.type === "internship");
+  const organization = experiences?.find((e) => e.type === "organization");
+
+  // Kepanitiaan: experiences dengan type "organization" dan memiliki events
+  // Atau bisa dibuat type tersendiri jika dibutuhkan
+  const committee = experiences?.filter(
+    (e) => e.type === "organization" && e.events && e.events.length > 0,
+  );
 
   return (
     <section
       id="experience"
-      className="section-shell pt-10 pb-20 md:pt-14 md:pb-24 px-4 sm:px-6 lg:px-8"
+      className="section-shell bg-cream-dark pt-10 pb-20 md:pt-14 md:pb-24 px-4 sm:px-6 lg:px-8"
       ref={ref}
     >
       <div className="mx-auto max-w-6xl">
@@ -371,162 +252,201 @@ export default function Experience() {
           <div className="section-divider" />
         </motion.div>
 
-        {/* Internship + Org */}
-        <motion.div
-          variants={stagger(0.1)}
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          className="mb-8 grid gap-5 xl:grid-cols-2"
-        >
-          {/* Internship */}
-          <motion.div
-            variants={slideUp}
-            className="overflow-hidden rounded-2xl border border-brown-light/20 bg-cream-dark"
-          >
-            {/* Hero photo banner */}
-            <div className="relative h-44 w-full overflow-hidden">
-              <Image
-                src="/experiences/exp-plp-ceremony.jpeg"
-                alt={photos.internship[0].caption[language]}
-                fill
-                className="object-cover object-center"
-                sizes="(max-width: 1280px) 100vw, 50vw"
-              />
-              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
-              {/* Label badge */}
-              <span className="absolute left-4 top-4 rounded-full border border-brown-light/40 bg-brown/80 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-sm">
-                {c.internship.label}
-              </span>
-              {/* Title overlay */}
-              <div className="absolute bottom-4 left-4 right-4">
-                <p className="text-xs text-white/80">{c.internship.org}</p>
-                <h4 className="font-bold text-white leading-snug">
-                  {c.internship.title}
-                </h4>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-5 sm:p-6">
-              <p className="mb-4 text-xs text-text-muted">
-                {c.internship.period}
-              </p>
-              <ul className="space-y-2.5">
-                {c.internship.points.map((p, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-2.5 text-sm leading-relaxed text-text-muted"
-                  >
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brown-light" />
-                    {p}
-                  </li>
-                ))}
-              </ul>
-              <PhotoStrip
-                photoKey="internship"
-                lang={language}
-                label={c.photoLabel}
-              />
-            </div>
-          </motion.div>
-
-          {/* Organization */}
-          <motion.div
-            variants={slideUp}
-            className="overflow-hidden rounded-2xl border border-brown-light/20 bg-cream-dark"
-          >
-            {/* Hero photo banner */}
-            <div className="relative h-44 w-full overflow-hidden">
-              <Image
-                src="/experiences/exp-hmk-members.png"
-                alt={photos.org[0].caption[language]}
-                fill
-                className="object-cover object-top"
-                sizes="(max-width: 1280px) 100vw, 50vw"
-              />
-              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
-              <span className="absolute left-4 top-4 rounded-full border border-brown-light/40 bg-brown/80 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-sm">
-                {c.org.label}
-              </span>
-              <div className="absolute bottom-4 left-4 right-4">
-                <p className="text-xs text-white/80">{c.org.org}</p>
-                <h4 className="font-bold text-white leading-snug">
-                  {c.org.title}
-                </h4>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-5 sm:p-6">
-              <p className="mb-4 text-xs text-text-muted">{c.org.period}</p>
-              <ul className="space-y-2.5">
-                {c.org.points.map((p, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-2.5 text-sm leading-relaxed text-text-muted"
-                  >
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brown-light" />
-                    {p}
-                  </li>
-                ))}
-              </ul>
-              <PhotoStrip photoKey="org" lang={language} label={c.photoLabel} />
-            </div>
-          </motion.div>
-        </motion.div>
-
-        {/* Committee */}
-        <motion.div
-          variants={slideUp}
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-        >
-          <div className="mb-6 flex items-center justify-center gap-2">
-            <Award size={14} className="text-brown" />
-            <span className="text-sm font-semibold uppercase tracking-wider text-text-muted">
-              {c.committee.label}
-            </span>
+        {/* Error state */}
+        {status === "error" && (
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <p className="text-sm text-text-muted">{error ?? c.errorMsg}</p>
+            <button
+              onClick={refetch}
+              className="flex items-center gap-1.5 rounded-full border border-brown-light/30 px-4 py-1.5 text-xs font-medium text-brown transition-colors hover:bg-brown/5"
+            >
+              <RefreshCw size={12} />
+              {c.retryLabel}
+            </button>
           </div>
+        )}
+
+        {/* Loading */}
+        {status === "loading" && (
+          <div className="grid gap-8 md:grid-cols-2">
+            <ExperienceSkeleton />
+            <ExperienceSkeleton />
+          </div>
+        )}
+
+        {/* Content */}
+        {status === "success" && (
           <motion.div
-            variants={stagger(0.07)}
+            variants={stagger(0.12)}
             initial="hidden"
             animate={inView ? "visible" : "hidden"}
-            className="grid gap-5 sm:grid-cols-2"
+            className="grid gap-8 md:grid-cols-2"
           >
-            {c.committee.events.map((event) => (
-              <motion.div
-                key={event.title}
-                variants={slideUp}
-                className="rounded-2xl border border-brown-light/20 bg-cream-dark p-5"
-              >
-                <div className="mb-3 flex items-start justify-between gap-2">
-                  <div>
-                    <h4 className="font-bold text-sm text-text-main">
-                      {event.title}
-                    </h4>
-                    <p className="mt-0.5 text-xs font-medium text-brown">
-                      {event.role}
-                    </p>
+            {/* ── Magang (Internship) ─────────────────────── */}
+            {internship && (
+              <motion.div variants={slideLeft}>
+                {/* Preview image */}
+                {internship.images.length > 0 && (
+                  <div className="relative mb-5 h-44 w-full overflow-hidden rounded-2xl">
+                    <Image
+                      src={internship.images[0].src}
+                      alt={internship.images[0].caption[language]}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
                   </div>
-                  <span className="shrink-0 text-xs text-text-muted">
-                    {event.period}
-                  </span>
+                )}
+
+                <div className="rounded-2xl border border-brown-light/20 bg-cream p-5">
+                  <div className="mb-3 flex items-start justify-between gap-2">
+                    <div>
+                      <span className="mb-1 inline-block rounded-full bg-brown/10 px-2.5 py-0.5 text-xs font-semibold text-brown">
+                        {internship.title[language] ||
+                          (language === "id" ? "Magang" : "Internship")}
+                      </span>
+                      <h3 className="text-base font-bold text-text-main">
+                        {internship.title[language]}
+                      </h3>
+                    </div>
+                    <Award size={18} className="mt-1 shrink-0 text-brown/40" />
+                  </div>
+
+                  <p className="mb-1 text-sm font-medium text-brown">
+                    {internship.org}
+                  </p>
+                  <p className="mb-4 text-xs text-text-muted">
+                    {internship.period}
+                  </p>
+
+                  <ul className="space-y-2.5">
+                    {internship.points.map((p, i) => (
+                      <li
+                        key={i}
+                        className="flex items-start gap-2.5 text-sm leading-relaxed text-text-muted"
+                      >
+                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brown-light" />
+                        {p[language]}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <PhotoStrip
+                    photos={internship.images}
+                    label={c.photoLabel}
+                    lang={language}
+                  />
                 </div>
-                <ul className="space-y-2">
-                  {event.points.map((p, j) => (
-                    <li
-                      key={j}
-                      className="flex items-start gap-2 text-sm leading-relaxed text-text-muted"
-                    >
-                      <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-brown-light" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
               </motion.div>
-            ))}
+            )}
+
+            {/* ── Organisasi ─────────────────────────────── */}
+            {organization && (
+              <motion.div variants={slideRight} className="space-y-6">
+                {/* Foto organisasi */}
+                {organization.images.length > 0 && (
+                  <div className="relative h-44 w-full overflow-hidden rounded-2xl">
+                    <Image
+                      src={organization.images[0].src}
+                      alt={organization.images[0].caption[language]}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                  </div>
+                )}
+
+                <div className="rounded-2xl border border-brown-light/20 bg-cream p-5">
+                  <div className="mb-3 flex items-start justify-between gap-2">
+                    <div>
+                      <span className="mb-1 inline-block rounded-full bg-brown/10 px-2.5 py-0.5 text-xs font-semibold text-brown">
+                        {language === "id" ? "Organisasi" : "Organization"}
+                      </span>
+                      <h3 className="text-base font-bold text-text-main">
+                        {organization.title[language]}
+                      </h3>
+                    </div>
+                    <Award size={18} className="mt-1 shrink-0 text-brown/40" />
+                  </div>
+
+                  <p className="mb-1 text-sm font-medium text-brown">
+                    {organization.org}
+                  </p>
+                  <p className="mb-4 text-xs text-text-muted">
+                    {organization.period}
+                  </p>
+
+                  <ul className="space-y-2.5">
+                    {organization.points.map((p, i) => (
+                      <li
+                        key={i}
+                        className="flex items-start gap-2.5 text-sm leading-relaxed text-text-muted"
+                      >
+                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brown-light" />
+                        {p[language]}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <PhotoStrip
+                    photos={organization.images}
+                    label={c.photoLabel}
+                    lang={language}
+                  />
+                </div>
+
+                {/* ── Kepanitiaan ── */}
+                {committee && committee.length > 0 && committee[0].events && (
+                  <div>
+                    <p className="mb-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brown">
+                      <span className="inline-block h-px w-4 bg-brown" />
+                      {c.committeeLabel}
+                    </p>
+                    <motion.div
+                      variants={stagger(0.07)}
+                      initial="hidden"
+                      animate={inView ? "visible" : "hidden"}
+                      className="space-y-3"
+                    >
+                      {committee[0].events!.map((event, i) => (
+                        <motion.div
+                          key={i}
+                          variants={slideUp}
+                          className="rounded-2xl border border-brown-light/20 bg-cream-dark p-5"
+                        >
+                          <div className="mb-3 flex items-start justify-between gap-2">
+                            <div>
+                              <h4 className="font-bold text-sm text-text-main">
+                                {event.name[language]}
+                              </h4>
+                              <p className="text-xs text-brown">
+                                {event.role[language]}
+                              </p>
+                            </div>
+                            <span className="shrink-0 rounded-full border border-brown-light/25 bg-cream px-2 py-0.5 text-[10px] font-medium text-text-muted">
+                              {event.period}
+                            </span>
+                          </div>
+                          <ul className="space-y-2">
+                            {event.points.map((p, j) => (
+                              <li
+                                key={j}
+                                className="flex items-start gap-2 text-sm leading-relaxed text-text-muted"
+                              >
+                                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-brown-light" />
+                                {p[language]}
+                              </li>
+                            ))}
+                          </ul>
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  </div>
+                )}
+              </motion.div>
+            )}
           </motion.div>
-        </motion.div>
+        )}
       </div>
     </section>
   );

@@ -13,7 +13,11 @@ import {
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
 import { useMotion } from "@/lib/motion";
 import emailjs from "@emailjs/browser";
+import { api } from "@/lib/api";
 
+// ─────────────────────────────────────────────
+// TRANSLATIONS
+// ─────────────────────────────────────────────
 const content = {
   id: {
     sectionTag: "Kontak",
@@ -22,6 +26,7 @@ const content = {
       "Terbuka untuk peluang kerja, kolaborasi, atau sekadar berdiskusi.",
     namePlaceholder: "Nama Anda",
     emailPlaceholder: "Email Anda",
+    subjectPlaceholder: "Subjek",
     messagePlaceholder: "Pesan Anda...",
     send: "Kirim Pesan",
     sent: "Terkirim!",
@@ -30,6 +35,7 @@ const content = {
       "Terima kasih! Pesan Anda sudah terkirim, saya akan segera membalas.",
     errorMsg:
       "Gagal mengirim pesan. Silakan coba lagi atau hubungi langsung via email.",
+    tryAgain: "Coba Lagi",
   },
   en: {
     sectionTag: "Contact",
@@ -38,6 +44,7 @@ const content = {
       "Open to job opportunities, collaborations, or just having a conversation.",
     namePlaceholder: "Your Name",
     emailPlaceholder: "Your Email",
+    subjectPlaceholder: "Subject",
     messagePlaceholder: "Your Message...",
     send: "Send Message",
     sent: "Sent!",
@@ -45,28 +52,38 @@ const content = {
     successMsg: "Thank you! Your message has been sent, I will reply soon.",
     errorMsg:
       "Failed to send message. Please try again or contact me directly via email.",
+    tryAgain: "Try Again",
   },
 };
 
-// Read from environment variables
+// EmailJS env vars
 const SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID ?? "";
 const TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID ?? "";
 const PUBLIC_KEY = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY ?? "";
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// ─────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────
 export default function Contact() {
   const { language } = useThemeLanguage();
   const c = content[language];
   const ref = useRef(null);
   const formRef = useRef<HTMLFormElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
+  });
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
     "idle",
   );
   const [lastLang, setLastLang] = useState(language);
-  const { slideUp, slideRight, slideLeft, stagger } = useMotion();
+  const { slideUp, slideLeft, slideRight, stagger } = useMotion();
 
-  // Reset status when language changes — derived, no useEffect needed
+  // Reset status saat bahasa berubah
   if (language !== lastLang) {
     setLastLang(language);
     if (status !== "idle" && status !== "sending") setStatus("idle");
@@ -75,31 +92,59 @@ export default function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formRef.current) return;
-
-    // Fallback: if EmailJS not configured, open mailto
-    if (!SERVICE_ID || SERVICE_ID === "your_service_id") {
-      const subject = encodeURIComponent(`Pesan dari ${form.name}`);
-      const body = encodeURIComponent(
-        `Nama: ${form.name}\nEmail: ${form.email}\n\n${form.message}`,
-      );
-      window.open(
-        `mailto:irmairyani698@gmail.com?subject=${subject}&body=${body}`,
-      );
-      return;
-    }
-
     setStatus("sending");
 
-    try {
-      await emailjs.sendForm(SERVICE_ID, TEMPLATE_ID, formRef.current, {
-        publicKey: PUBLIC_KEY,
-      });
-      setStatus("sent");
-      setForm({ name: "", email: "", message: "" });
-    } catch (err) {
-      console.error("EmailJS error:", err);
-      setStatus("error");
+    // ── Strategi pengiriman ──────────────────────────────────────────
+    // 1. Coba backend API (jika NEXT_PUBLIC_API_URL dikonfigurasi)
+    // 2. Fallback ke EmailJS (jika SERVICE_ID dikonfigurasi)
+    // 3. Fallback ke mailto: (jika keduanya tidak ada)
+    // ────────────────────────────────────────────────────────────────
+
+    // 1. Backend API
+    if (BACKEND_URL) {
+      try {
+        await api.sendContact({
+          name: form.name,
+          email: form.email,
+          subject: form.subject || `Pesan dari ${form.name}`,
+          message: form.message,
+        });
+        setStatus("sent");
+        setForm({ name: "", email: "", subject: "", message: "" });
+        return;
+      } catch (err) {
+        console.warn("Backend contact failed, trying EmailJS fallback:", err);
+        // Lanjut ke fallback EmailJS
+      }
     }
+
+    // 2. EmailJS fallback
+    if (SERVICE_ID && SERVICE_ID !== "your_service_id") {
+      try {
+        await emailjs.sendForm(SERVICE_ID, TEMPLATE_ID, formRef.current, {
+          publicKey: PUBLIC_KEY,
+        });
+        setStatus("sent");
+        setForm({ name: "", email: "", subject: "", message: "" });
+        return;
+      } catch (err) {
+        console.error("EmailJS error:", err);
+        setStatus("error");
+        return;
+      }
+    }
+
+    // 3. Mailto fallback
+    const subject = encodeURIComponent(
+      form.subject || `Pesan dari ${form.name}`,
+    );
+    const body = encodeURIComponent(
+      `Nama: ${form.name}\nEmail: ${form.email}\n\n${form.message}`,
+    );
+    window.open(
+      `mailto:irmairyani698@gmail.com?subject=${subject}&body=${body}`,
+    );
+    setStatus("idle");
   };
 
   const contactItems = [
@@ -192,10 +237,7 @@ export default function Contact() {
             onSubmit={handleSubmit}
             className="space-y-4 rounded-2xl border border-brown-light/20 bg-cream p-5 sm:p-6"
           >
-            {/*
-              Field names MUST match the EmailJS template variables:
-              name="from_name", name="from_email", name="message"
-            */}
+            {/* Nama */}
             <input
               type="text"
               name="from_name"
@@ -205,6 +247,8 @@ export default function Contact() {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               className="w-full rounded-xl border border-brown-light/20 bg-cream-dark px-4 py-3 text-sm text-text-main outline-none transition-colors focus:border-brown placeholder:text-text-muted/60"
             />
+
+            {/* Email */}
             <input
               type="email"
               name="from_email"
@@ -214,6 +258,18 @@ export default function Contact() {
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               className="w-full rounded-xl border border-brown-light/20 bg-cream-dark px-4 py-3 text-sm text-text-main outline-none transition-colors focus:border-brown placeholder:text-text-muted/60"
             />
+
+            {/* Subjek (baru — dibutuhkan backend) */}
+            <input
+              type="text"
+              name="subject"
+              placeholder={c.subjectPlaceholder}
+              value={form.subject}
+              onChange={(e) => setForm({ ...form, subject: e.target.value })}
+              className="w-full rounded-xl border border-brown-light/20 bg-cream-dark px-4 py-3 text-sm text-text-main outline-none transition-colors focus:border-brown placeholder:text-text-muted/60"
+            />
+
+            {/* Pesan */}
             <textarea
               name="message"
               required
@@ -224,7 +280,7 @@ export default function Contact() {
               className="w-full resize-none rounded-xl border border-brown-light/20 bg-cream-dark px-4 py-3 text-sm text-text-main outline-none transition-colors focus:border-brown placeholder:text-text-muted/60"
             />
 
-            {/* Success message */}
+            {/* Success */}
             {status === "sent" && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -237,7 +293,7 @@ export default function Contact() {
               </motion.div>
             )}
 
-            {/* Error message */}
+            {/* Error */}
             {status === "error" && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -258,6 +314,7 @@ export default function Contact() {
               </motion.div>
             )}
 
+            {/* Submit button */}
             <motion.button
               type="submit"
               disabled={status === "sending" || status === "sent"}
@@ -291,14 +348,14 @@ export default function Contact() {
               )}
             </motion.button>
 
-            {/* Retry button after error */}
+            {/* Retry */}
             {status === "error" && (
               <button
                 type="button"
                 onClick={() => setStatus("idle")}
                 className="w-full rounded-xl border border-brown-light/30 py-2.5 text-sm font-medium text-text-muted transition-colors hover:text-brown cursor-pointer"
               >
-                {language === "id" ? "Coba Lagi" : "Try Again"}
+                {c.tryAgain}
               </button>
             )}
           </motion.form>
