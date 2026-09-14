@@ -1,0 +1,10 @@
+{
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://irma.josapratama.cloud/api"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_URL": "https://irma.josapratama.cloud/api"
+    }
+  }
+}
