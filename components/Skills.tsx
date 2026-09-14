@@ -116,11 +116,10 @@ export default function Skills() {
   const softGroup = skillGroups?.find((g) => g.category === "soft");
   const hardGroup = skillGroups?.find((g) => g.category === "hard");
 
-  // Language group jika ada di API (opsional — bisa di-extend nanti)
+  // Language group: pakai category eksplisit "language" dari backend
+  // Fallback ke statis jika backend belum support category ini
   const langGroup = skillGroups?.find(
-    (g) =>
-      g.label?.id?.toLowerCase().includes("bahasa") ||
-      g.label?.en?.toLowerCase().includes("language"),
+    (g) => (g.category as string) === "language",
   );
 
   return (

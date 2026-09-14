@@ -162,7 +162,7 @@ function PhotoStrip({
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-white">
-                  Lihat
+                  {lang === "id" ? "Lihat" : "View"}
                 </span>
               </div>
             </div>
@@ -223,11 +223,9 @@ export default function ExperienceSection() {
   const internship = experiences?.find((e) => e.type === "internship");
   const organization = experiences?.find((e) => e.type === "organization");
 
-  // Kepanitiaan: experiences dengan type "organization" dan memiliki events
-  // Atau bisa dibuat type tersendiri jika dibutuhkan
-  const committee = experiences?.filter(
-    (e) => e.type === "organization" && e.events && e.events.length > 0,
-  );
+  // Kepanitiaan: events array di dalam organization entry
+  // committee[0] === organization, jadi cukup gunakan organization.events langsung
+  const committeeEvents = organization?.events ?? [];
 
   return (
     <section
@@ -302,8 +300,7 @@ export default function ExperienceSection() {
                   <div className="mb-3 flex items-start justify-between gap-2">
                     <div>
                       <span className="mb-1 inline-block rounded-full bg-brown/10 px-2.5 py-0.5 text-xs font-semibold text-brown">
-                        {internship.title[language] ||
-                          (language === "id" ? "Magang" : "Internship")}
+                        {language === "id" ? "Magang" : "Internship"}
                       </span>
                       <h3 className="text-base font-bold text-text-main">
                         {internship.title[language]}
@@ -396,7 +393,7 @@ export default function ExperienceSection() {
                 </div>
 
                 {/* ── Kepanitiaan ── */}
-                {committee && committee.length > 0 && committee[0].events && (
+                {committeeEvents.length > 0 && (
                   <div>
                     <p className="mb-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brown">
                       <span className="inline-block h-px w-4 bg-brown" />
@@ -408,7 +405,7 @@ export default function ExperienceSection() {
                       animate={inView ? "visible" : "hidden"}
                       className="space-y-3"
                     >
-                      {committee[0].events!.map((event, i) => (
+                      {committeeEvents.map((event, i) => (
                         <motion.div
                           key={i}
                           variants={slideUp}

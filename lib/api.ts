@@ -1,20 +1,25 @@
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 
 // ─── Generic fetch wrapper ─────────────────────────────────────────────────
 export async function apiFetch<T>(
   path: string,
-  init?: RequestInit
+  init?: RequestInit & { timeoutMs?: number },
 ): Promise<T> {
+  const { timeoutMs = 10_000, ...fetchInit } = init ?? {};
+
+  // AbortSignal.timeout — drop request if backend doesn't respond in time
+  const signal = AbortSignal.timeout(timeoutMs);
+
   const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json", ...init?.headers },
-    ...init,
+    headers: { "Content-Type": "application/json", ...fetchInit.headers },
+    signal,
+    ...fetchInit,
   });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(
-      (body as { message?: string }).message ?? `API error ${res.status}`
+      (body as { message?: string }).message ?? `API error ${res.status}`,
     );
   }
 
@@ -27,7 +32,7 @@ export const api = {
   // Certificates
   getCertificates: (category?: string) =>
     apiFetch<Certificate[]>(
-      `/certificates${category ? `?category=${category}` : ""}`
+      `/certificates${category ? `?category=${category}` : ""}`,
     ),
 
   // Projects
@@ -35,15 +40,11 @@ export const api = {
 
   // Experiences
   getExperiences: (type?: "internship" | "organization") =>
-    apiFetch<Experience[]>(
-      `/experiences${type ? `?type=${type}` : ""}`
-    ),
+    apiFetch<Experience[]>(`/experiences${type ? `?type=${type}` : ""}`),
 
   // Skills
   getSkills: (category?: "hard" | "soft") =>
-    apiFetch<SkillGroup[]>(
-      `/skills${category ? `?category=${category}` : ""}`
-    ),
+    apiFetch<SkillGroup[]>(`/skills${category ? `?category=${category}` : ""}`),
 
   // Recommendation Letters
   getRecommendationLetters: () =>
@@ -66,7 +67,12 @@ export type Certificate = {
   issuer: string;
   date: string;
   score?: string;
-  category: "Technology" | "Professional" | "Soft Skills" | "Data" | "Organization";
+  category:
+    | "Technology"
+    | "Professional"
+    | "Soft Skills"
+    | "Data"
+    | "Organization";
   images: string[];
   pdfPath?: string;
   order: number;
