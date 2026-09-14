@@ -1,5 +1,31 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 
+/**
+ * AbortSignal.timeout polyfill — AbortSignal.timeout tidak tersedia di
+ * Safari < 16 dan Chrome < 103. Gunakan AbortController + setTimeout.
+ */
+function timeoutSignal(ms: number): AbortSignal {
+  if (
+    typeof AbortSignal !== "undefined" &&
+    typeof AbortSignal.timeout === "function"
+  ) {
+    return AbortSignal.timeout(ms);
+  }
+  // Polyfill untuk browser lama
+  const controller = new AbortController();
+  setTimeout(
+    () =>
+      controller.abort(
+        new DOMException(
+          "The operation was aborted due to timeout",
+          "TimeoutError",
+        ),
+      ),
+    ms,
+  );
+  return controller.signal;
+}
+
 // ─── Generic fetch wrapper ─────────────────────────────────────────────────
 export async function apiFetch<T>(
   path: string,
@@ -7,12 +33,9 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const { timeoutMs = 10_000, ...fetchInit } = init ?? {};
 
-  // AbortSignal.timeout — drop request if backend doesn't respond in time
-  const signal = AbortSignal.timeout(timeoutMs);
-
   const res = await fetch(`${BASE_URL}${path}`, {
     headers: { "Content-Type": "application/json", ...fetchInit.headers },
-    signal,
+    signal: timeoutSignal(timeoutMs),
     ...fetchInit,
   });
 
@@ -92,7 +115,7 @@ export type SkillItem = { name: string; level: number };
 
 export type SkillGroup = {
   _id: string;
-  category: "hard" | "soft";
+  category: "hard" | "soft" | "language";
   label: BilingualText;
   items: SkillItem[];
   order: number;

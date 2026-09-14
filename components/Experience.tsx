@@ -218,7 +218,13 @@ export default function ExperienceSection() {
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const { slideUp, slideLeft, slideRight, stagger } = useMotion();
 
-  const { status, data: experiences, error, refetch } = useExperiences();
+  const {
+    status,
+    data: experiences,
+    error,
+    isTimeout,
+    refetch,
+  } = useExperiences();
 
   const internship = experiences?.find((e) => e.type === "internship");
   const organization = experiences?.find((e) => e.type === "organization");
@@ -253,7 +259,13 @@ export default function ExperienceSection() {
         {/* Error state */}
         {status === "error" && (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
-            <p className="text-sm text-text-muted">{error ?? c.errorMsg}</p>
+            <p className="text-sm text-text-muted">
+              {isTimeout
+                ? language === "id"
+                  ? "Server tidak merespons. Pastikan backend sedang berjalan."
+                  : "Server is not responding. Make sure the backend is running."
+                : (error ?? c.errorMsg)}
+            </p>
             <button
               onClick={refetch}
               className="flex items-center gap-1.5 rounded-full border border-brown-light/30 px-4 py-1.5 text-xs font-medium text-brown transition-colors hover:bg-brown/5"

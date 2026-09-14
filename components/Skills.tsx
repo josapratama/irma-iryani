@@ -110,7 +110,7 @@ export default function Skills() {
   const { slideUp, slideLeft, slideRight, stagger } = useMotion();
 
   // Fetch semua skill groups sekaligus
-  const { status, data: skillGroups, error, refetch } = useSkills();
+  const { status, data: skillGroups, error, isTimeout, refetch } = useSkills();
 
   // Pisahkan berdasar category dari response API
   const softGroup = skillGroups?.find((g) => g.category === "soft");
@@ -118,9 +118,7 @@ export default function Skills() {
 
   // Language group: pakai category eksplisit "language" dari backend
   // Fallback ke statis jika backend belum support category ini
-  const langGroup = skillGroups?.find(
-    (g) => (g.category as string) === "language",
-  );
+  const langGroup = skillGroups?.find((g) => g.category === "language");
 
   return (
     <section
@@ -149,10 +147,14 @@ export default function Skills() {
         {status === "error" && (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
             <p className="text-sm text-text-muted">
-              {error ??
-                (language === "id"
-                  ? "Gagal memuat data keahlian"
-                  : "Failed to load skills")}
+              {isTimeout
+                ? language === "id"
+                  ? "Server tidak merespons. Pastikan backend sedang berjalan."
+                  : "Server is not responding. Make sure the backend is running."
+                : (error ??
+                  (language === "id"
+                    ? "Gagal memuat data keahlian"
+                    : "Failed to load skills"))}
             </p>
             <button
               onClick={refetch}

@@ -447,6 +447,7 @@ export default function Certificates() {
     status: certStatus,
     data: certificates,
     error: certError,
+    isTimeout: certTimeout,
     refetch: refetchCerts,
   } = useCertificates();
 
@@ -454,6 +455,7 @@ export default function Certificates() {
     status: recoStatus,
     data: recommendationLetters,
     error: recoError,
+    isTimeout: recoTimeout,
     refetch: refetchReco,
   } = useRecommendationLetters();
 
@@ -461,6 +463,7 @@ export default function Certificates() {
     status: projStatus,
     data: projects,
     error: projError,
+    isTimeout: projTimeout,
     refetch: refetchProj,
   } = useProjects();
 
@@ -597,10 +600,14 @@ export default function Certificates() {
           {certStatus === "error" && (
             <ErrorState
               message={
-                certError ??
-                (language === "id"
-                  ? "Gagal memuat sertifikat"
-                  : "Failed to load certificates")
+                certTimeout
+                  ? language === "id"
+                    ? "Server tidak merespons. Pastikan backend sedang berjalan."
+                    : "Server is not responding. Make sure the backend is running."
+                  : (certError ??
+                    (language === "id"
+                      ? "Gagal memuat sertifikat"
+                      : "Failed to load certificates"))
               }
               onRetry={refetchCerts}
               language={language}
@@ -765,7 +772,16 @@ export default function Certificates() {
           {recoStatus === "loading" && <CardSkeleton count={2} />}
           {recoStatus === "error" && (
             <ErrorState
-              message={recoError ?? "Gagal memuat surat rekomendasi"}
+              message={
+                recoTimeout
+                  ? language === "id"
+                    ? "Server tidak merespons. Pastikan backend sedang berjalan."
+                    : "Server is not responding. Make sure the backend is running."
+                  : (recoError ??
+                    (language === "id"
+                      ? "Gagal memuat surat rekomendasi"
+                      : "Failed to load recommendation letters"))
+              }
               onRetry={refetchReco}
               language={language}
             />
@@ -869,7 +885,16 @@ export default function Certificates() {
           {projStatus === "loading" && <CardSkeleton count={2} />}
           {projStatus === "error" && (
             <ErrorState
-              message={projError ?? "Gagal memuat proyek"}
+              message={
+                projTimeout
+                  ? language === "id"
+                    ? "Server tidak merespons. Pastikan backend sedang berjalan."
+                    : "Server is not responding. Make sure the backend is running."
+                  : (projError ??
+                    (language === "id"
+                      ? "Gagal memuat proyek"
+                      : "Failed to load projects"))
+              }
               onRetry={refetchProj}
               language={language}
             />

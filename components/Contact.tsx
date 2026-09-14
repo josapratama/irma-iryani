@@ -259,7 +259,13 @@ export default function Contact() {
               className="w-full rounded-xl border border-brown-light/20 bg-cream-dark px-4 py-3 text-sm text-text-main outline-none transition-colors focus:border-brown placeholder:text-text-muted/60"
             />
 
-            {/* Subjek (baru — dibutuhkan backend) */}
+            {/*
+              Subjek — dikirim ke backend sebagai field "subject".
+              Untuk EmailJS fallback: pastikan template EmailJS memiliki
+              variable {{subject}} agar field ini terkirim di email.
+              Jika {{subject}} tidak ada di template, field ini diabaikan
+              diam-diam oleh EmailJS tanpa error.
+            */}
             <input
               type="text"
               name="subject"

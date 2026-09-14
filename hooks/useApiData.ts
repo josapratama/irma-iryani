@@ -3,17 +3,17 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 type State<T> =
-  | { status: "loading"; data: null; error: null }
-  | { status: "success"; data: T; error: null }
-  | { status: "error"; data: null; error: string };
+  | { status: "loading"; data: null; error: null; isTimeout: false }
+  | { status: "success"; data: T; error: null; isTimeout: false }
+  | { status: "error"; data: null; error: string; isTimeout: boolean };
 
 /**
  * Generic data-fetching hook.
  *
- * Fixes:
  * - AbortController: cancels in-flight fetch when component unmounts
  * - fetcherRef: stores latest fetcher in a ref so useCallback deps stay
  *   stable and don't cause infinite re-fetch loops
+ * - isTimeout: true jika error disebabkan timeout (backend tidak merespons)
  */
 export function useApiData<T>(
   fetcher: () => Promise<T>,
@@ -23,41 +23,41 @@ export function useApiData<T>(
     status: "loading",
     data: null,
     error: null,
+    isTimeout: false,
   });
 
-  // Keep latest fetcher in a ref — never changes identity, prevents
-  // unnecessary re-runs of the effect when caller re-renders
   const fetcherRef = useRef(fetcher);
   useEffect(() => {
     fetcherRef.current = fetcher;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetcher]);
 
-  // Abort controller ref — cancelled on unmount or re-run
   const abortRef = useRef<AbortController | null>(null);
 
   const load = useCallback(async () => {
-    // Cancel any previous in-flight request
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
 
-    setState({ status: "loading", data: null, error: null });
+    setState({ status: "loading", data: null, error: null, isTimeout: false });
 
     try {
       const data = await fetcherRef.current();
-
-      // Ignore if this call was aborted (component unmounted / re-fetched)
       if (controller.signal.aborted) return;
-
-      setState({ status: "success", data, error: null });
+      setState({ status: "success", data, error: null, isTimeout: false });
     } catch (err) {
       if (controller.signal.aborted) return;
+
+      // Deteksi timeout: DOMException dengan name TimeoutError atau AbortError
+      const isTimeout =
+        err instanceof DOMException &&
+        (err.name === "TimeoutError" || err.name === "AbortError");
 
       setState({
         status: "error",
         data: null,
         error: err instanceof Error ? err.message : "Unknown error",
+        isTimeout,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -66,7 +66,6 @@ export function useApiData<T>(
   useEffect(() => {
     load();
     return () => {
-      // Abort on unmount
       abortRef.current?.abort();
     };
   }, [load]);
