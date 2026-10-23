@@ -15,6 +15,8 @@ import type { NextConfig } from "next";
 const BACKEND_INTERNAL_URL = process.env.BACKEND_INTERNAL_URL;
 
 const nextConfig: NextConfig = {
+  output: "standalone",
+
   // ── Turbopack — alias canvas untuk pdfjs-dist ────────────────────────────
   turbopack: {
     resolveAlias: {
