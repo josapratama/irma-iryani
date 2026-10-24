@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -27,7 +27,13 @@ import {
   ChevronRight,
   Inbox,
   AlertCircle,
-  FileCheck,
+  Copy,
+  Terminal,
+  Sparkles,
+  Layers,
+  Calendar,
+  Globe,
+  SlidersHorizontal,
 } from "lucide-react";
 import {
   api,
@@ -59,11 +65,13 @@ export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabType>("certificates");
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const [copiedCmd, setCopiedCmd] = useState(false);
 
   // Data States
   const [certificates, setCertificates] = useState<Certificate[]>([]);
@@ -82,7 +90,10 @@ export default function AdminDashboardPage() {
     confirmPassword: "",
   });
 
-  // Generic Edit/Create Modals
+  // Modal active lang tab for bilingual fields
+  const [modalLang, setModalLang] = useState<"id" | "en">("id");
+
+  // Edit/Create Modal states
   const [editingCert, setEditingCert] = useState<Partial<Certificate> | null>(null);
   const [editingProject, setEditingProject] = useState<Partial<Project> | null>(null);
   const [editingExp, setEditingExp] = useState<Partial<Experience> | null>(null);
@@ -90,14 +101,22 @@ export default function AdminDashboardPage() {
   const [editingLetter, setEditingLetter] = useState<Partial<RecommendationLetter> | null>(null);
   const [viewingContact, setViewingContact] = useState<ContactMessage | null>(null);
 
-  // New Skill Item inline input (groupId -> { name, level })
-  const [newSkillItem, setNewSkillItem] = useState<{ [groupId: string]: { name: string; level: number } }>({});
+  // Inline skill item input per group
+  const [newSkillItem, setNewSkillItem] = useState<{
+    [groupId: string]: { name: string; level: number };
+  }>({});
 
   const showFeedback = (type: "success" | "error", message: string) => {
     setFeedback({ type, message });
     setTimeout(() => {
       setFeedback((prev) => (prev?.message === message ? null : prev));
-    }, 4000);
+    }, 4500);
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedCmd(true);
+    setTimeout(() => setCopiedCmd(false), 2500);
   };
 
   // ── Auth Verification & Data Loading ──────────────────────────────────────
@@ -119,16 +138,23 @@ export default function AdminDashboardPage() {
 
     setIsLoading(true);
     try {
-      const [certsData, projsData, expsData, skillsData, lettersData, contactsData, statsData] =
-        await Promise.allSettled([
-          api.admin.getCertificates(),
-          api.admin.getProjects(),
-          api.admin.getExperiences(),
-          api.admin.getSkills(),
-          api.admin.getRecommendationLetters(),
-          api.admin.getContacts(1, 50),
-          api.admin.getContactStats(),
-        ]);
+      const [
+        certsData,
+        projsData,
+        expsData,
+        skillsData,
+        lettersData,
+        contactsData,
+        statsData,
+      ] = await Promise.allSettled([
+        api.admin.getCertificates(),
+        api.admin.getProjects(),
+        api.admin.getExperiences(),
+        api.admin.getSkills(),
+        api.admin.getRecommendationLetters(),
+        api.admin.getContacts(1, 50),
+        api.admin.getContactStats(),
+      ]);
 
       if (certsData.status === "fulfilled") setCertificates(certsData.value || []);
       if (projsData.status === "fulfilled") setProjects(projsData.value || []);
@@ -137,7 +163,7 @@ export default function AdminDashboardPage() {
       if (lettersData.status === "fulfilled") setLetters(lettersData.value || []);
       if (contactsData.status === "fulfilled") setContacts(contactsData.value.data || []);
       if (statsData.status === "fulfilled") setContactStats(statsData.value || null);
-    } catch (err: unknown) {
+    } catch {
       showFeedback("error", "Gagal memuat sebagian data dari backend.");
     } finally {
       setIsLoading(false);
@@ -239,7 +265,7 @@ export default function AdminDashboardPage() {
       setProjects((prev) =>
         prev.map((p) => (p._id === proj._id ? { ...p, isVisible: newVis } : p)),
       );
-      showFeedback("success", `Visibilitas proyek diperbarui.`);
+      showFeedback("success", "Visibilitas proyek diperbarui.");
     } catch {
       showFeedback("error", "Gagal memperbarui visibilitas.");
     }
@@ -289,7 +315,7 @@ export default function AdminDashboardPage() {
       setExperiences((prev) =>
         prev.map((e) => (e._id === exp._id ? { ...e, isVisible: newVis } : e)),
       );
-      showFeedback("success", `Visibilitas pengalaman diperbarui.`);
+      showFeedback("success", "Visibilitas pengalaman diperbarui.");
     } catch {
       showFeedback("error", "Gagal memperbarui visibilitas.");
     }
@@ -339,7 +365,7 @@ export default function AdminDashboardPage() {
       setSkills((prev) =>
         prev.map((g) => (g._id === group._id ? { ...g, isVisible: newVis } : g)),
       );
-      showFeedback("success", `Visibilitas grup skill diperbarui.`);
+      showFeedback("success", "Visibilitas grup skill diperbarui.");
     } catch {
       showFeedback("error", "Gagal memperbarui visibilitas.");
     }
@@ -394,7 +420,7 @@ export default function AdminDashboardPage() {
       setLetters((prev) =>
         prev.map((l) => (l._id === letter._id ? { ...l, isVisible: newVis } : l)),
       );
-      showFeedback("success", `Visibilitas surat rekomendasi diperbarui.`);
+      showFeedback("success", "Visibilitas surat rekomendasi diperbarui.");
     } catch {
       showFeedback("error", "Gagal memperbarui visibilitas.");
     }
@@ -418,7 +444,10 @@ export default function AdminDashboardPage() {
     setActionLoading("saveLetter");
     try {
       if (editingLetter._id) {
-        const updated = await api.admin.updateRecommendationLetter(editingLetter._id, editingLetter);
+        const updated = await api.admin.updateRecommendationLetter(
+          editingLetter._id,
+          editingLetter,
+        );
         setLetters((prev) =>
           prev.map((l) => (l._id === editingLetter._id ? updated : l)),
         );
@@ -453,7 +482,7 @@ export default function AdminDashboardPage() {
           });
         }
       } catch {
-        // Abaikan jika gagal update read di background
+        // silent
       }
     }
   };
@@ -483,37 +512,78 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // ── Filtering Logic ──────────────────────────────────────────────────────
+  const filteredCertificates = useMemo(() => {
+    return certificates.filter((c) => {
+      const matchQuery =
+        !searchQuery ||
+        (c.title.id && c.title.id.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (c.title.en && c.title.en.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (c.issuer && c.issuer.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchCat = categoryFilter === "all" || c.category === categoryFilter;
+      return matchQuery && matchCat;
+    });
+  }, [certificates, searchQuery, categoryFilter]);
+
+  const filteredProjects = useMemo(() => {
+    return projects.filter((p) => {
+      return (
+        !searchQuery ||
+        (p.title.id && p.title.id.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (p.title.en && p.title.en.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (p.tags && p.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())))
+      );
+    });
+  }, [projects, searchQuery]);
+
+  const filteredExperiences = useMemo(() => {
+    return experiences.filter((e) => {
+      const matchQuery =
+        !searchQuery ||
+        (e.title.id && e.title.id.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (e.title.en && e.title.en.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (e.org && e.org.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchType = categoryFilter === "all" || e.type === categoryFilter;
+      return matchQuery && matchType;
+    });
+  }, [experiences, searchQuery, categoryFilter]);
+
   return (
-    <div className="min-h-screen bg-[var(--color-cream)] text-[var(--color-text-main)] flex flex-col">
-      {/* ── Topbar ──────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-30 bg-[var(--color-cream-dark)]/80 dark:bg-[var(--color-cream-dark)]/40 backdrop-blur-md border-b border-[var(--color-brown-light)]/20 px-4 sm:px-6 py-3 flex items-center justify-between">
+    <div className="min-h-screen bg-[var(--color-cream)] text-[var(--color-text-main)] flex flex-col font-sans selection:bg-[var(--color-brown-light)]/30">
+      {/* ── Topbar Header ───────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-30 bg-[var(--color-cream)]/90 dark:bg-[var(--color-cream-dark)]/85 backdrop-blur-md border-b border-[var(--color-brown-light)]/20 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[var(--color-brown)] text-white flex items-center justify-center font-bold text-sm shadow-sm">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[var(--color-brown)] to-[var(--color-brown-light)] text-white flex items-center justify-center font-bold text-sm shadow-md shadow-[var(--color-brown)]/20">
             II
           </div>
           <div>
-            <h1 className="font-bold text-sm sm:text-base leading-tight">
-              Irma Iryani <span className="text-[var(--color-brown)] font-normal">Dashboard</span>
-            </h1>
-            <p className="text-[10px] text-[var(--color-text-muted)] truncate max-w-[180px] sm:max-w-none">
-              Masuk sebagai: <span className="font-medium text-[var(--color-text-main)]">{adminEmail}</span>
+            <div className="flex items-center gap-2">
+              <h1 className="font-extrabold text-sm sm:text-base tracking-tight leading-none text-[var(--color-text-main)]">
+                Irma Iryani
+              </h1>
+              <span className="text-[10px] font-mono uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-[var(--color-brown)]/15 text-[var(--color-brown)]">
+                Admin
+              </span>
+            </div>
+            <p className="text-[11px] text-[var(--color-text-muted)] truncate max-w-[160px] sm:max-w-none mt-0.5">
+              {adminEmail}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           <Link
             href="/"
             target="_blank"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-xs font-medium text-[var(--color-text-main)] transition-colors"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-xs font-semibold text-[var(--color-text-main)] transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5 text-[var(--color-brown)]" />
-            <span>Lihat Web</span>
+            <span>Lihat Website</span>
           </Link>
 
           <button
             onClick={() => setIsPasswordModalOpen(true)}
-            className="p-1.5 sm:px-3 sm:py-1.5 rounded-lg border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-xs font-medium text-[var(--color-text-main)] transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            className="p-2 sm:px-3 sm:py-1.5 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-xs font-semibold text-[var(--color-text-main)] transition-colors inline-flex items-center gap-1.5 cursor-pointer"
             title="Ganti Password"
           >
             <KeyRound className="w-3.5 h-3.5 text-[var(--color-brown)]" />
@@ -522,7 +592,7 @@ export default function AdminDashboardPage() {
 
           <button
             onClick={handleLogout}
-            className="p-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium transition-colors inline-flex items-center gap-1.5 cursor-pointer border border-red-500/20"
+            className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer border border-red-500/20"
             title="Keluar"
           >
             <LogOut className="w-3.5 h-3.5" />
@@ -531,13 +601,13 @@ export default function AdminDashboardPage() {
         </div>
       </header>
 
-      {/* ── Feedback Notification ───────────────────────────────────────────── */}
+      {/* ── Feedback Notification Toast ────────────────────────────────────── */}
       {feedback && (
         <div
-          className={`fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl text-xs font-medium shadow-xl flex items-center gap-2.5 animate-in slide-in-from-bottom-2 duration-200 ${
+          className={`fixed bottom-5 right-5 z-50 px-4 py-3 rounded-2xl text-xs font-semibold shadow-2xl flex items-center gap-2.5 animate-in slide-in-from-bottom-3 duration-200 ${
             feedback.type === "success"
-              ? "bg-emerald-600 text-white"
-              : "bg-red-600 text-white"
+              ? "bg-emerald-600 text-white shadow-emerald-600/30"
+              : "bg-red-600 text-white shadow-red-600/30"
           }`}
         >
           {feedback.type === "success" ? (
@@ -548,7 +618,7 @@ export default function AdminDashboardPage() {
           <span>{feedback.message}</span>
           <button
             onClick={() => setFeedback(null)}
-            className="ml-2 hover:opacity-75 cursor-pointer"
+            className="ml-2 hover:opacity-75 cursor-pointer p-0.5"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -556,12 +626,98 @@ export default function AdminDashboardPage() {
       )}
 
       {/* ── Main Container ──────────────────────────────────────────────────── */}
-      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-5">
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-[var(--color-brown-light)]/20 custom-scrollbar">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+        {/* ── Quick Overview Metric Cards ───────────────────────────────────── */}
+        <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            {
+              id: "certificates",
+              label: "Sertifikat",
+              icon: Award,
+              count: certificates.length,
+              color: "text-amber-600 bg-amber-500/10 border-amber-500/20",
+            },
+            {
+              id: "projects",
+              label: "Proyek & Modul",
+              icon: Briefcase,
+              count: projects.length,
+              color: "text-blue-600 bg-blue-500/10 border-blue-500/20",
+            },
+            {
+              id: "experiences",
+              label: "Pengalaman",
+              icon: Building2,
+              count: experiences.length,
+              color: "text-emerald-600 bg-emerald-500/10 border-emerald-500/20",
+            },
+            {
+              id: "skills",
+              label: "Grup Keahlian",
+              icon: Cpu,
+              count: skills.length,
+              color: "text-purple-600 bg-purple-500/10 border-purple-500/20",
+            },
+            {
+              id: "letters",
+              label: "Surat Rekomendasi",
+              icon: FileText,
+              count: letters.length,
+              color: "text-indigo-600 bg-indigo-500/10 border-indigo-500/20",
+            },
+            {
+              id: "contacts",
+              label: "Pesan Masuk",
+              icon: Inbox,
+              count: contacts.length,
+              badge: contactStats?.unread || 0,
+              color: "text-rose-600 bg-rose-500/10 border-rose-500/20",
+            },
+          ].map((metric) => {
+            const Icon = metric.icon;
+            const isCurrent = activeTab === metric.id;
+            return (
+              <button
+                key={metric.id}
+                onClick={() => {
+                  setActiveTab(metric.id as TabType);
+                  setSearchQuery("");
+                  setCategoryFilter("all");
+                }}
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between group ${
+                  isCurrent
+                    ? "bg-[var(--color-cream-dark)]/70 border-[var(--color-brown)] shadow-sm scale-[1.02]"
+                    : "bg-[var(--color-cream-dark)]/30 border-[var(--color-brown-light)]/20 hover:border-[var(--color-brown-light)]/40 hover:bg-[var(--color-cream-dark)]/50"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className={`p-2 rounded-xl border ${metric.color}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  {metric.badge !== undefined && metric.badge > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white animate-pulse">
+                      {metric.badge} Baru
+                    </span>
+                  )}
+                </div>
+                <div className="mt-3">
+                  <div className="text-xl font-extrabold tracking-tight text-[var(--color-text-main)]">
+                    {metric.count}
+                  </div>
+                  <div className="text-[11px] font-semibold text-[var(--color-text-muted)] group-hover:text-[var(--color-brown)] transition-colors truncate">
+                    {metric.label}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </section>
+
+        {/* ── Main Navigation Pill Tabs ──────────────────────────────────────── */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-[var(--color-brown-light)]/20 custom-scrollbar">
           {[
             { id: "certificates", label: "Sertifikat", icon: Award, count: certificates.length },
-            { id: "projects", label: "Proyek", icon: Briefcase, count: projects.length },
+            { id: "projects", label: "Proyek & Modul", icon: Briefcase, count: projects.length },
             { id: "experiences", label: "Pengalaman", icon: Building2, count: experiences.length },
             { id: "skills", label: "Keahlian", icon: Cpu, count: skills.length },
             { id: "letters", label: "Surat Rekomendasi", icon: FileText, count: letters.length },
@@ -580,23 +736,26 @@ export default function AdminDashboardPage() {
                 onClick={() => {
                   setActiveTab(tab.id as TabType);
                   setSearchQuery("");
+                  setCategoryFilter("all");
                 }}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                   isActive
-                    ? "bg-[var(--color-brown)] text-white shadow-sm"
+                    ? "bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white shadow-md shadow-[var(--color-brown)]/20"
                     : "text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] hover:bg-[var(--color-brown-light)]/10"
                 }`}
               >
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
                 {tab.badge !== undefined && tab.badge > 0 ? (
-                  <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                  <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold">
                     {tab.badge}
                   </span>
                 ) : tab.count !== undefined ? (
                   <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                      isActive ? "bg-white/20 text-white" : "bg-[var(--color-brown-light)]/20 text-[var(--color-text-muted)]"
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
+                      isActive
+                        ? "bg-white/20 text-white"
+                        : "bg-[var(--color-brown-light)]/20 text-[var(--color-text-muted)]"
                     }`}
                   >
                     {tab.count}
@@ -610,8 +769,8 @@ export default function AdminDashboardPage() {
             <button
               onClick={checkAuthAndLoad}
               disabled={isLoading}
-              className="p-2 rounded-xl border border-[var(--color-brown-light)]/30 text-[var(--color-text-muted)] hover:text-[var(--color-brown)] transition-colors cursor-pointer"
-              title="Refresh Data"
+              className="p-2.5 rounded-xl border border-[var(--color-brown-light)]/30 text-[var(--color-text-muted)] hover:text-[var(--color-brown)] hover:bg-[var(--color-brown)]/10 transition-colors cursor-pointer"
+              title="Muat Ulang Data"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
             </button>
@@ -620,24 +779,24 @@ export default function AdminDashboardPage() {
 
         {/* ── Tab Content ────────────────────────────────────────────────────── */}
         {isLoading ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-[var(--color-text-muted)]">
-            <Loader2 className="w-8 h-8 animate-spin text-[var(--color-brown)] mb-3" />
-            <p className="text-xs">Memuat data dari database...</p>
+          <div className="flex-1 flex flex-col items-center justify-center p-16 text-center text-[var(--color-text-muted)]">
+            <Loader2 className="w-9 h-9 animate-spin text-[var(--color-brown)] mb-3" />
+            <p className="text-xs font-semibold">Memuat data dari server backend...</p>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col gap-4">
+          <div className="flex-1 flex flex-col gap-5">
             {/* ════════════════ CERTIFICATES TAB ════════════════ */}
             {activeTab === "certificates" && (
               <div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                   <div>
-                    <h2 className="text-base font-bold">Manajemen Sertifikat</h2>
-                    <p className="text-xs text-[var(--color-text-muted)]">
+                    <h2 className="text-lg font-extrabold tracking-tight">Manajemen Sertifikat</h2>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                       Kelola daftar sertifikat pelatihan, kompetensi, dan penghargaan
                     </p>
                   </div>
                   <button
-                    onClick={() =>
+                    onClick={() => {
                       setEditingCert({
                         title: { id: "", en: "" },
                         issuer: "",
@@ -646,109 +805,170 @@ export default function AdminDashboardPage() {
                         images: [],
                         order: certificates.length + 1,
                         isVisible: true,
-                      })
-                    }
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--color-brown)] text-white text-xs font-semibold hover:bg-[var(--color-brown-dark)] transition-colors shadow-sm cursor-pointer"
+                      });
+                      setModalLang("id");
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer self-start sm:self-auto"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Tambah Sertifikat</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {certificates.map((cert) => (
-                    <div
-                      key={cert._id}
-                      className={`rounded-2xl border p-4 flex flex-col justify-between transition-all bg-[var(--color-cream-dark)]/40 ${
-                        cert.isVisible
-                          ? "border-[var(--color-brown-light)]/30 shadow-xs"
-                          : "border-dashed border-[var(--color-brown-light)]/20 opacity-60"
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[var(--color-brown)]/15 text-[var(--color-brown)]">
-                            {cert.category}
-                          </span>
-                          <span className="text-[10px] text-[var(--color-text-muted)]">
-                            Urutan: #{cert.order}
-                          </span>
-                        </div>
-                        <h3 className="font-bold text-sm leading-snug text-[var(--color-text-main)]">
-                          {cert.title.id || cert.title.en}
-                        </h3>
-                        {cert.title.en && cert.title.id !== cert.title.en && (
-                          <p className="text-xs text-[var(--color-text-muted)] italic mt-0.5">
-                            {cert.title.en}
-                          </p>
-                        )}
-                        <p className="text-xs text-[var(--color-text-muted)] mt-2">
-                          🏛️ {cert.issuer} • 🗓️ {cert.date}
-                        </p>
-                        {cert.score && (
-                          <p className="text-xs text-[var(--color-brown)] font-semibold mt-1">
-                            Nilai / Skor: {cert.score}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="mt-4 pt-3 border-t border-[var(--color-brown-light)]/20 flex items-center justify-between">
-                        <button
-                          onClick={() => handleToggleCertVisibility(cert)}
-                          className={`text-xs flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
-                            cert.isVisible
-                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                              : "bg-neutral-500/10 border-neutral-500/30 text-neutral-500"
-                          }`}
-                        >
-                          {cert.isVisible ? (
-                            <>
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>Tampil</span>
-                            </>
-                          ) : (
-                            <>
-                              <EyeOff className="w-3.5 h-3.5" />
-                              <span>Disembunyikan</span>
-                            </>
-                          )}
-                        </button>
-
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => setEditingCert(cert)}
-                            className="p-1.5 rounded-lg border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-[var(--color-brown)] transition-colors cursor-pointer"
-                            title="Edit"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCert(cert._id)}
-                            className="p-1.5 rounded-lg border border-red-500/30 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
-                            title="Hapus"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
+                {/* Filter and Search Bar */}
+                {certificates.length > 0 && (
+                  <div className="flex flex-col sm:flex-row items-center gap-3 mb-5">
+                    <div className="relative flex-1 w-full">
+                      <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
+                      <input
+                        type="text"
+                        placeholder="Cari sertifikat atau penerbit..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-9.5 pr-4 py-2 text-xs rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/30 focus:border-[var(--color-brown)] outline-none"
+                      />
                     </div>
-                  ))}
-                </div>
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="w-full sm:w-auto px-3.5 py-2 text-xs rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/30 focus:border-[var(--color-brown)] outline-none font-semibold text-[var(--color-text-main)]"
+                    >
+                      <option value="all">Semua Kategori</option>
+                      <option value="Technology">Technology</option>
+                      <option value="Professional">Professional</option>
+                      <option value="Soft Skills">Soft Skills</option>
+                      <option value="Data">Data</option>
+                      <option value="Organization">Organization</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Empty State Banner when 0 items */}
+                {certificates.length === 0 ? (
+                  <EmptyStateCard
+                    title="Belum Ada Sertifikat di Database"
+                    description="Database saat ini masih kosong. Anda bisa mengklik Tambah Sertifikat, atau menjalankan perintah seed di terminal backend untuk menyemai 20+ data bawaan sekaligus."
+                    onAdd={() =>
+                      setEditingCert({
+                        title: { id: "", en: "" },
+                        issuer: "",
+                        date: "",
+                        category: "Technology",
+                        images: [],
+                        order: 1,
+                        isVisible: true,
+                      })
+                    }
+                    onCopySeed={copyToClipboard}
+                    copied={copiedCmd}
+                  />
+                ) : filteredCertificates.length === 0 ? (
+                  <div className="p-8 text-center border border-dashed border-[var(--color-brown-light)]/30 rounded-2xl text-xs text-[var(--color-text-muted)]">
+                    Tidak ditemukan sertifikat yang sesuai dengan kata kunci pencarian.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredCertificates.map((cert) => (
+                      <div
+                        key={cert._id}
+                        className={`rounded-2xl border p-4.5 flex flex-col justify-between transition-all bg-[var(--color-cream-dark)]/30 hover:bg-[var(--color-cream-dark)]/50 ${
+                          cert.isVisible
+                            ? "border-[var(--color-brown-light)]/30 shadow-xs"
+                            : "border-dashed border-[var(--color-brown-light)]/20 opacity-60"
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-2.5">
+                            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-[var(--color-brown)]/15 text-[var(--color-brown)]">
+                              {cert.category}
+                            </span>
+                            <span className="text-[10px] font-mono text-[var(--color-text-muted)]">
+                              #{cert.order}
+                            </span>
+                          </div>
+                          <h3 className="font-bold text-sm leading-snug text-[var(--color-text-main)]">
+                            {cert.title.id || cert.title.en}
+                          </h3>
+                          {cert.title.en && cert.title.id !== cert.title.en && (
+                            <p className="text-xs text-[var(--color-text-muted)] italic mt-1">
+                              {cert.title.en}
+                            </p>
+                          )}
+                          <div className="mt-2.5 flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
+                            <span>🏛️</span>
+                            <span className="truncate">{cert.issuer}</span>
+                            <span>•</span>
+                            <span>🗓️</span>
+                            <span>{cert.date}</span>
+                          </div>
+                          {cert.score && (
+                            <div className="mt-2 text-[11px] font-bold text-[var(--color-brown)]">
+                              Nilai / Skor: {cert.score}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="mt-4 pt-3.5 border-t border-[var(--color-brown-light)]/20 flex items-center justify-between">
+                          <button
+                            onClick={() => handleToggleCertVisibility(cert)}
+                            className={`text-xs font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-colors cursor-pointer ${
+                              cert.isVisible
+                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                                : "bg-neutral-500/10 border-neutral-500/30 text-neutral-500"
+                            }`}
+                          >
+                            {cert.isVisible ? (
+                              <>
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Tampil</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3.5 h-3.5" />
+                                <span>Hidden</span>
+                              </>
+                            )}
+                          </button>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                setEditingCert(cert);
+                                setModalLang("id");
+                              }}
+                              className="p-2 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-[var(--color-brown)] transition-colors cursor-pointer"
+                              title="Edit"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCert(cert._id)}
+                              className="p-2 rounded-xl border border-red-500/30 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
+                              title="Hapus"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {/* ════════════════ PROJECTS TAB ════════════════ */}
             {activeTab === "projects" && (
               <div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                   <div>
-                    <h2 className="text-base font-bold">Manajemen Proyek & Modul</h2>
-                    <p className="text-xs text-[var(--color-text-muted)]">
+                    <h2 className="text-lg font-extrabold tracking-tight">Manajemen Proyek & Modul</h2>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                       Kelola daftar modul ajar, penelitian, dan karya pendidikan
                     </p>
                   </div>
                   <button
-                    onClick={() =>
+                    onClick={() => {
                       setEditingProject({
                         title: { id: "", en: "" },
                         description: { id: "", en: "" },
@@ -757,111 +977,135 @@ export default function AdminDashboardPage() {
                         fileName: "",
                         order: projects.length + 1,
                         isVisible: true,
-                      })
-                    }
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--color-brown)] text-white text-xs font-semibold hover:bg-[var(--color-brown-dark)] transition-colors shadow-sm cursor-pointer"
+                      });
+                      setModalLang("id");
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer self-start sm:self-auto"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Tambah Proyek</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {projects.map((proj) => (
-                    <div
-                      key={proj._id}
-                      className={`rounded-2xl border p-4.5 flex flex-col justify-between transition-all bg-[var(--color-cream-dark)]/40 ${
-                        proj.isVisible
-                          ? "border-[var(--color-brown-light)]/30 shadow-xs"
-                          : "border-dashed border-[var(--color-brown-light)]/20 opacity-60"
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[10px] text-[var(--color-text-muted)]">
-                            Urutan: #{proj.order}
-                          </span>
-                        </div>
-                        <h3 className="font-bold text-sm text-[var(--color-text-main)]">
-                          {proj.title.id || proj.title.en}
-                        </h3>
-                        <p className="text-xs text-[var(--color-text-muted)] mt-1.5 line-clamp-3">
-                          {proj.description.id || proj.description.en}
-                        </p>
-                        <div className="flex flex-wrap gap-1 mt-3">
-                          {proj.tags?.map((tag) => (
-                            <span
-                              key={tag}
-                              className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-[var(--color-brown)]/10 text-[var(--color-brown)]"
-                            >
-                              #{tag}
+                {projects.length === 0 ? (
+                  <EmptyStateCard
+                    title="Belum Ada Proyek di Database"
+                    description="Database proyek masih kosong. Tambah proyek baru secara manual atau jalankan seeder di container backend."
+                    onAdd={() =>
+                      setEditingProject({
+                        title: { id: "", en: "" },
+                        description: { id: "", en: "" },
+                        tags: [],
+                        pdfPath: "",
+                        fileName: "",
+                        order: 1,
+                        isVisible: true,
+                      })
+                    }
+                    onCopySeed={copyToClipboard}
+                    copied={copiedCmd}
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredProjects.map((proj) => (
+                      <div
+                        key={proj._id}
+                        className={`rounded-2xl border p-5 flex flex-col justify-between transition-all bg-[var(--color-cream-dark)]/30 hover:bg-[var(--color-cream-dark)]/50 ${
+                          proj.isVisible
+                            ? "border-[var(--color-brown-light)]/30 shadow-xs"
+                            : "border-dashed border-[var(--color-brown-light)]/20 opacity-60"
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[10px] font-mono text-[var(--color-text-muted)]">
+                              Urutan: #{proj.order}
                             </span>
-                          ))}
-                        </div>
-                        {proj.pdfPath && (
-                          <p className="text-[11px] text-[var(--color-text-muted)] mt-2.5 truncate">
-                            📄 File PDF: <span className="underline">{proj.fileName || proj.pdfPath}</span>
+                          </div>
+                          <h3 className="font-bold text-sm text-[var(--color-text-main)]">
+                            {proj.title.id || proj.title.en}
+                          </h3>
+                          <p className="text-xs text-[var(--color-text-muted)] mt-1.5 line-clamp-3 leading-relaxed">
+                            {proj.description.id || proj.description.en}
                           </p>
-                        )}
-                      </div>
-
-                      <div className="mt-4 pt-3 border-t border-[var(--color-brown-light)]/20 flex items-center justify-between">
-                        <button
-                          onClick={() => handleToggleProjectVisibility(proj)}
-                          className={`text-xs flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
-                            proj.isVisible
-                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                              : "bg-neutral-500/10 border-neutral-500/30 text-neutral-500"
-                          }`}
-                        >
-                          {proj.isVisible ? (
-                            <>
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>Tampil</span>
-                            </>
-                          ) : (
-                            <>
-                              <EyeOff className="w-3.5 h-3.5" />
-                              <span>Disembunyikan</span>
-                            </>
+                          <div className="flex flex-wrap gap-1.5 mt-3">
+                            {proj.tags?.map((tag) => (
+                              <span
+                                key={tag}
+                                className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[var(--color-brown)]/10 text-[var(--color-brown)]"
+                              >
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                          {proj.pdfPath && (
+                            <p className="text-[11px] text-[var(--color-text-muted)] mt-2.5 truncate font-medium">
+                              📄 PDF: <span className="underline">{proj.fileName || proj.pdfPath}</span>
+                            </p>
                           )}
-                        </button>
+                        </div>
 
-                        <div className="flex items-center gap-1.5">
+                        <div className="mt-4 pt-3.5 border-t border-[var(--color-brown-light)]/20 flex items-center justify-between">
                           <button
-                            onClick={() => setEditingProject(proj)}
-                            className="p-1.5 rounded-lg border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-[var(--color-brown)] transition-colors cursor-pointer"
-                            title="Edit"
+                            onClick={() => handleToggleProjectVisibility(proj)}
+                            className={`text-xs font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-colors cursor-pointer ${
+                              proj.isVisible
+                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                                : "bg-neutral-500/10 border-neutral-500/30 text-neutral-500"
+                            }`}
                           >
-                            <Pencil className="w-3.5 h-3.5" />
+                            {proj.isVisible ? (
+                              <>
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Tampil</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3.5 h-3.5" />
+                                <span>Hidden</span>
+                              </>
+                            )}
                           </button>
-                          <button
-                            onClick={() => handleDeleteProject(proj._id)}
-                            className="p-1.5 rounded-lg border border-red-500/30 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
-                            title="Hapus"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                setEditingProject(proj);
+                                setModalLang("id");
+                              }}
+                              className="p-2 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-[var(--color-brown)] transition-colors cursor-pointer"
+                              title="Edit"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProject(proj._id)}
+                              className="p-2 rounded-xl border border-red-500/30 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
+                              title="Hapus"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {/* ════════════════ EXPERIENCES TAB ════════════════ */}
             {activeTab === "experiences" && (
               <div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                   <div>
-                    <h2 className="text-base font-bold">Manajemen Pengalaman</h2>
-                    <p className="text-xs text-[var(--color-text-muted)]">
+                    <h2 className="text-lg font-extrabold tracking-tight">Manajemen Pengalaman</h2>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                       Kelola riwayat magang mengajar dan pengalaman kepengurusan organisasi
                     </p>
                   </div>
                   <button
-                    onClick={() =>
+                    onClick={() => {
                       setEditingExp({
                         type: "internship",
                         title: { id: "", en: "" },
@@ -871,266 +1115,317 @@ export default function AdminDashboardPage() {
                         images: [],
                         order: experiences.length + 1,
                         isVisible: true,
-                      })
-                    }
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--color-brown)] text-white text-xs font-semibold hover:bg-[var(--color-brown-dark)] transition-colors shadow-sm cursor-pointer"
+                      });
+                      setModalLang("id");
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer self-start sm:self-auto"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Tambah Pengalaman</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {experiences.map((exp) => (
-                    <div
-                      key={exp._id}
-                      className={`rounded-2xl border p-4.5 flex flex-col justify-between transition-all bg-[var(--color-cream-dark)]/40 ${
-                        exp.isVisible
-                          ? "border-[var(--color-brown-light)]/30 shadow-xs"
-                          : "border-dashed border-[var(--color-brown-light)]/20 opacity-60"
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span
-                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                              exp.type === "internship"
-                                ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                                : "bg-blue-500/15 text-blue-700 dark:text-blue-400"
+                {experiences.length === 0 ? (
+                  <EmptyStateCard
+                    title="Belum Ada Pengalaman di Database"
+                    description="Riwayat pengalaman mengajar dan organisasi masih kosong."
+                    onAdd={() =>
+                      setEditingExp({
+                        type: "internship",
+                        title: { id: "", en: "" },
+                        org: "",
+                        period: "",
+                        points: [],
+                        images: [],
+                        order: 1,
+                        isVisible: true,
+                      })
+                    }
+                    onCopySeed={copyToClipboard}
+                    copied={copiedCmd}
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredExperiences.map((exp) => (
+                      <div
+                        key={exp._id}
+                        className={`rounded-2xl border p-5 flex flex-col justify-between transition-all bg-[var(--color-cream-dark)]/30 hover:bg-[var(--color-cream-dark)]/50 ${
+                          exp.isVisible
+                            ? "border-[var(--color-brown-light)]/30 shadow-xs"
+                            : "border-dashed border-[var(--color-brown-light)]/20 opacity-60"
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-2.5">
+                            <span
+                              className={`px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${
+                                exp.type === "internship"
+                                  ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                                  : "bg-blue-500/15 text-blue-700 dark:text-blue-400"
+                              }`}
+                            >
+                              {exp.type === "internship" ? "Magang / Mengajar" : "Organisasi"}
+                            </span>
+                            <span className="text-[10px] font-mono text-[var(--color-text-muted)]">
+                              Urutan: #{exp.order}
+                            </span>
+                          </div>
+                          <h3 className="font-bold text-sm text-[var(--color-text-main)]">
+                            {exp.title.id || exp.title.en}
+                          </h3>
+                          <p className="text-xs font-semibold text-[var(--color-brown)] mt-0.5">
+                            {exp.org} • <span className="font-normal">{exp.period}</span>
+                          </p>
+
+                          <div className="mt-3 space-y-1.5">
+                            {exp.points?.slice(0, 3).map((pt, i) => (
+                              <div
+                                key={i}
+                                className="text-xs text-[var(--color-text-muted)] flex items-start gap-1.5"
+                              >
+                                <span className="text-[var(--color-brown)] font-bold">•</span>
+                                <span className="line-clamp-1">{pt.id || pt.en}</span>
+                              </div>
+                            ))}
+                            {exp.points && exp.points.length > 3 && (
+                              <p className="text-[10px] text-[var(--color-brown)] font-bold">
+                                +{exp.points.length - 3} poin rincian tugas lainnya
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mt-4 pt-3.5 border-t border-[var(--color-brown-light)]/20 flex items-center justify-between">
+                          <button
+                            onClick={() => handleToggleExpVisibility(exp)}
+                            className={`text-xs font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-colors cursor-pointer ${
+                              exp.isVisible
+                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                                : "bg-neutral-500/10 border-neutral-500/30 text-neutral-500"
                             }`}
                           >
-                            {exp.type === "internship" ? "Magang / Mengajar" : "Organisasi"}
-                          </span>
-                          <span className="text-[10px] text-[var(--color-text-muted)]">
-                            Urutan: #{exp.order}
-                          </span>
-                        </div>
-                        <h3 className="font-bold text-sm text-[var(--color-text-main)]">
-                          {exp.title.id || exp.title.en}
-                        </h3>
-                        <p className="text-xs font-semibold text-[var(--color-brown)] mt-0.5">
-                          {exp.org} • <span className="font-normal">{exp.period}</span>
-                        </p>
+                            {exp.isVisible ? (
+                              <>
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Tampil</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3.5 h-3.5" />
+                                <span>Hidden</span>
+                              </>
+                            )}
+                          </button>
 
-                        <div className="mt-3 space-y-1">
-                          {exp.points?.slice(0, 3).map((pt, i) => (
-                            <div key={i} className="text-xs text-[var(--color-text-muted)] flex items-start gap-1.5">
-                              <span className="text-[var(--color-brown)]">•</span>
-                              <span className="line-clamp-1">{pt.id || pt.en}</span>
-                            </div>
-                          ))}
-                          {exp.points && exp.points.length > 3 && (
-                            <p className="text-[10px] text-[var(--color-brown)] font-medium">
-                              +{exp.points.length - 3} poin tugas lainnya
-                            </p>
-                          )}
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                setEditingExp(exp);
+                                setModalLang("id");
+                              }}
+                              className="p-2 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-[var(--color-brown)] transition-colors cursor-pointer"
+                              title="Edit"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteExp(exp._id)}
+                              className="p-2 rounded-xl border border-red-500/30 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
+                              title="Hapus"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
-
-                      <div className="mt-4 pt-3 border-t border-[var(--color-brown-light)]/20 flex items-center justify-between">
-                        <button
-                          onClick={() => handleToggleExpVisibility(exp)}
-                          className={`text-xs flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
-                            exp.isVisible
-                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                              : "bg-neutral-500/10 border-neutral-500/30 text-neutral-500"
-                          }`}
-                        >
-                          {exp.isVisible ? (
-                            <>
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>Tampil</span>
-                            </>
-                          ) : (
-                            <>
-                              <EyeOff className="w-3.5 h-3.5" />
-                              <span>Disembunyikan</span>
-                            </>
-                          )}
-                        </button>
-
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => setEditingExp(exp)}
-                            className="p-1.5 rounded-lg border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-[var(--color-brown)] transition-colors cursor-pointer"
-                            title="Edit"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteExp(exp._id)}
-                            className="p-1.5 rounded-lg border border-red-500/30 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
-                            title="Hapus"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {/* ════════════════ SKILLS TAB ════════════════ */}
             {activeTab === "skills" && (
               <div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                   <div>
-                    <h2 className="text-base font-bold">Manajemen Keahlian</h2>
-                    <p className="text-xs text-[var(--color-text-muted)]">
-                      Kelola grup keahlian (Hard Skills, Soft Skills, Bahasa) dan persentase penguasaan
+                    <h2 className="text-lg font-extrabold tracking-tight">Manajemen Keahlian</h2>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                      Kelola grup keahlian (Hard Skills, Soft Skills, Bahasa) dan persentase level
                     </p>
                   </div>
                   <button
-                    onClick={() =>
+                    onClick={() => {
                       setEditingSkillGroup({
                         category: "hard",
                         label: { id: "", en: "" },
                         items: [],
                         order: skills.length + 1,
                         isVisible: true,
-                      })
-                    }
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--color-brown)] text-white text-xs font-semibold hover:bg-[var(--color-brown-dark)] transition-colors shadow-sm cursor-pointer"
+                      });
+                      setModalLang("id");
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer self-start sm:self-auto"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Tambah Grup Keahlian</span>
                   </button>
                 </div>
 
-                <div className="space-y-4">
-                  {skills.map((group) => (
-                    <div
-                      key={group._id}
-                      className="rounded-2xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/40 p-5 shadow-xs"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[var(--color-brown-light)]/20">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[var(--color-brown)]/15 text-[var(--color-brown)]">
+                {skills.length === 0 ? (
+                  <EmptyStateCard
+                    title="Belum Ada Kategori Keahlian di Database"
+                    description="Kategori Hard Skills, Soft Skills, dan Bahasa masih kosong."
+                    onAdd={() =>
+                      setEditingSkillGroup({
+                        category: "hard",
+                        label: { id: "", en: "" },
+                        items: [],
+                        order: 1,
+                        isVisible: true,
+                      })
+                    }
+                    onCopySeed={copyToClipboard}
+                    copied={copiedCmd}
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    {skills.map((group) => (
+                      <div
+                        key={group._id}
+                        className="rounded-2xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/30 p-5 shadow-xs"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 border-b border-[var(--color-brown-light)]/20">
+                          <div className="flex items-center gap-2.5">
+                            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-[var(--color-brown)]/15 text-[var(--color-brown)]">
                               {group.category}
                             </span>
-                            <h3 className="font-bold text-sm text-[var(--color-text-main)]">
+                            <h3 className="font-extrabold text-sm text-[var(--color-text-main)]">
                               {group.label.id || group.label.en}
                             </h3>
                           </div>
-                        </div>
 
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleToggleSkillVisibility(group)}
-                            className={`text-xs flex items-center gap-1 px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
-                              group.isVisible
-                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                                : "bg-neutral-500/10 border-neutral-500/30 text-neutral-500"
-                            }`}
-                          >
-                            {group.isVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                            <span>{group.isVisible ? "Tampil" : "Hidden"}</span>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteSkillGroup(group._id)}
-                            className="p-1.5 rounded-lg border border-red-500/30 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
-                            title="Hapus Grup"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Items List */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 my-4">
-                        {group.items?.map((item, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/20 text-xs"
-                          >
-                            <div className="flex-1 min-w-0 pr-2">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="font-semibold truncate">{item.name}</span>
-                                <span className="text-[var(--color-brown)] font-bold text-[10px]">
-                                  {item.level}%
-                                </span>
-                              </div>
-                              <div className="w-full bg-[var(--color-brown-light)]/20 h-1.5 rounded-full overflow-hidden">
-                                <div
-                                  className="bg-[var(--color-brown)] h-full rounded-full"
-                                  style={{ width: `${item.level}%` }}
-                                />
-                              </div>
-                            </div>
+                          <div className="flex items-center gap-2">
                             <button
-                              onClick={() => handleDeleteSkillItem(group._id, idx)}
-                              className="text-red-500 hover:text-red-700 p-1 cursor-pointer"
-                              title="Hapus Item"
+                              onClick={() => handleToggleSkillVisibility(group)}
+                              className={`text-xs font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-colors cursor-pointer ${
+                                group.isVisible
+                                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                                  : "bg-neutral-500/10 border-neutral-500/30 text-neutral-500"
+                              }`}
                             >
-                              <X className="w-3.5 h-3.5" />
+                              {group.isVisible ? (
+                                <Eye className="w-3.5 h-3.5" />
+                              ) : (
+                                <EyeOff className="w-3.5 h-3.5" />
+                              )}
+                              <span>{group.isVisible ? "Tampil" : "Hidden"}</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSkillGroup(group._id)}
+                              className="p-1.5 rounded-xl border border-red-500/30 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
+                              title="Hapus Grup"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
-                        ))}
-                      </div>
+                        </div>
 
-                      {/* Add Item Inline */}
-                      <div className="flex items-center gap-2 pt-2 border-t border-[var(--color-brown-light)]/15">
-                        <input
-                          type="text"
-                          placeholder="Nama skill baru (mis: Kurikulum Merdeka)"
-                          value={newSkillItem[group._id]?.name || ""}
-                          onChange={(e) =>
-                            setNewSkillItem({
-                              ...newSkillItem,
-                              [group._id]: {
-                                name: e.target.value,
-                                level: newSkillItem[group._id]?.level || 80,
-                              },
-                            })
-                          }
-                          className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
-                        />
-                        <input
-                          type="number"
-                          min={1}
-                          max={100}
-                          placeholder="Level %"
-                          value={newSkillItem[group._id]?.level || 80}
-                          onChange={(e) =>
-                            setNewSkillItem({
-                              ...newSkillItem,
-                              [group._id]: {
-                                name: newSkillItem[group._id]?.name || "",
-                                level: Number(e.target.value),
-                              },
-                            })
-                          }
-                          className="w-20 px-3 py-1.5 text-xs rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
-                        />
-                        <button
-                          onClick={() => handleAddSkillItem(group._id)}
-                          className="px-3 py-1.5 rounded-xl bg-[var(--color-brown)] text-white text-xs font-semibold hover:bg-[var(--color-brown-dark)] transition-colors cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Tambah Item</span>
-                        </button>
+                        {/* Items Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 my-4">
+                          {group.items?.map((item, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between p-3 rounded-xl bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/20 text-xs shadow-xs"
+                            >
+                              <div className="flex-1 min-w-0 pr-3">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <span className="font-bold truncate">{item.name}</span>
+                                  <span className="text-[var(--color-brown)] font-extrabold text-[10px]">
+                                    {item.level}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-[var(--color-brown-light)]/20 h-1.5 rounded-full overflow-hidden">
+                                  <div
+                                    className="bg-gradient-to-r from-[var(--color-brown-light)] to-[var(--color-brown)] h-full rounded-full transition-all"
+                                    style={{ width: `${item.level}%` }}
+                                  />
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => handleDeleteSkillItem(group._id, idx)}
+                                className="text-red-500 hover:bg-red-500/10 p-1 rounded-md transition-colors cursor-pointer"
+                                title="Hapus Item"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Inline Add Item Form */}
+                        <div className="flex flex-col sm:flex-row items-center gap-2 pt-3 border-t border-[var(--color-brown-light)]/15">
+                          <input
+                            type="text"
+                            placeholder="Nama keahlian baru (mis: Kurikulum Merdeka)"
+                            value={newSkillItem[group._id]?.name || ""}
+                            onChange={(e) =>
+                              setNewSkillItem({
+                                ...newSkillItem,
+                                [group._id]: {
+                                  name: e.target.value,
+                                  level: newSkillItem[group._id]?.level || 80,
+                                },
+                              })
+                            }
+                            className="w-full sm:flex-1 px-3.5 py-2 text-xs rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)] font-medium"
+                          />
+                          <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              placeholder="Level %"
+                              value={newSkillItem[group._id]?.level || 80}
+                              onChange={(e) =>
+                                setNewSkillItem({
+                                  ...newSkillItem,
+                                  [group._id]: {
+                                    name: newSkillItem[group._id]?.name || "",
+                                    level: Number(e.target.value),
+                                  },
+                                })
+                              }
+                              className="w-24 px-3 py-2 text-xs rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)] font-bold text-center"
+                            />
+                            <button
+                              onClick={() => handleAddSkillItem(group._id)}
+                              className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-[var(--color-brown)] text-white text-xs font-bold hover:bg-[var(--color-brown-dark)] transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Tambah</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {/* ════════════════ RECOMMENDATION LETTERS TAB ════════════════ */}
             {activeTab === "letters" && (
               <div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                   <div>
-                    <h2 className="text-base font-bold">Manajemen Surat Rekomendasi</h2>
-                    <p className="text-xs text-[var(--color-text-muted)]">
-                      Kelola dokumen surat rekomendasi dari dosen dan instansi
+                    <h2 className="text-lg font-extrabold tracking-tight">Manajemen Surat Rekomendasi</h2>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                      Kelola dokumen surat rekomendasi akademik & profesional
                     </p>
                   </div>
                   <button
-                    onClick={() =>
+                    onClick={() => {
                       setEditingLetter({
                         title: { id: "", en: "" },
                         issuer: "",
@@ -1138,107 +1433,133 @@ export default function AdminDashboardPage() {
                         pages: [],
                         order: letters.length + 1,
                         isVisible: true,
-                      })
-                    }
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--color-brown)] text-white text-xs font-semibold hover:bg-[var(--color-brown-dark)] transition-colors shadow-sm cursor-pointer"
+                      });
+                      setModalLang("id");
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer self-start sm:self-auto"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Tambah Surat</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {letters.map((letter) => (
-                    <div
-                      key={letter._id}
-                      className={`rounded-2xl border p-4.5 flex flex-col justify-between transition-all bg-[var(--color-cream-dark)]/40 ${
-                        letter.isVisible
-                          ? "border-[var(--color-brown-light)]/30 shadow-xs"
-                          : "border-dashed border-[var(--color-brown-light)]/20 opacity-60"
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] text-[var(--color-text-muted)]">
-                            Urutan: #{letter.order}
-                          </span>
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-[var(--color-brown)]/15 text-[var(--color-brown)] font-semibold">
-                            {letter.pages?.length || 0} Halaman
-                          </span>
+                {letters.length === 0 ? (
+                  <EmptyStateCard
+                    title="Belum Ada Surat Rekomendasi"
+                    description="Daftar surat rekomendasi masih kosong."
+                    onAdd={() =>
+                      setEditingLetter({
+                        title: { id: "", en: "" },
+                        issuer: "",
+                        date: "",
+                        pages: [],
+                        order: 1,
+                        isVisible: true,
+                      })
+                    }
+                    onCopySeed={copyToClipboard}
+                    copied={copiedCmd}
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {letters.map((letter) => (
+                      <div
+                        key={letter._id}
+                        className={`rounded-2xl border p-5 flex flex-col justify-between transition-all bg-[var(--color-cream-dark)]/30 hover:bg-[var(--color-cream-dark)]/50 ${
+                          letter.isVisible
+                            ? "border-[var(--color-brown-light)]/30 shadow-xs"
+                            : "border-dashed border-[var(--color-brown-light)]/20 opacity-60"
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[10px] font-mono text-[var(--color-text-muted)]">
+                              Urutan: #{letter.order}
+                            </span>
+                            <span className="px-2.5 py-0.5 rounded text-[10px] bg-[var(--color-brown)]/15 text-[var(--color-brown)] font-bold">
+                              {letter.pages?.length || 0} Halaman
+                            </span>
+                          </div>
+                          <h3 className="font-bold text-sm text-[var(--color-text-main)]">
+                            {letter.title.id || letter.title.en}
+                          </h3>
+                          <p className="text-xs text-[var(--color-text-muted)] mt-1.5">
+                            ✍️ Pemberi:{" "}
+                            <span className="font-bold text-[var(--color-text-main)]">
+                              {letter.issuer}
+                            </span>
+                          </p>
+                          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                            🗓️ Tanggal: {letter.date}
+                          </p>
                         </div>
-                        <h3 className="font-bold text-sm text-[var(--color-text-main)]">
-                          {letter.title.id || letter.title.en}
-                        </h3>
-                        <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                          ✍️ Penerbit: <span className="font-medium text-[var(--color-text-main)]">{letter.issuer}</span>
-                        </p>
-                        <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-                          🗓️ Tanggal: {letter.date}
-                        </p>
-                      </div>
 
-                      <div className="mt-4 pt-3 border-t border-[var(--color-brown-light)]/20 flex items-center justify-between">
-                        <button
-                          onClick={() => handleToggleLetterVisibility(letter)}
-                          className={`text-xs flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
-                            letter.isVisible
-                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                              : "bg-neutral-500/10 border-neutral-500/30 text-neutral-500"
-                          }`}
-                        >
-                          {letter.isVisible ? (
-                            <>
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>Tampil</span>
-                            </>
-                          ) : (
-                            <>
-                              <EyeOff className="w-3.5 h-3.5" />
-                              <span>Disembunyikan</span>
-                            </>
-                          )}
-                        </button>
+                        <div className="mt-4 pt-3.5 border-t border-[var(--color-brown-light)]/20 flex items-center justify-between">
+                          <button
+                            onClick={() => handleToggleLetterVisibility(letter)}
+                            className={`text-xs font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-colors cursor-pointer ${
+                              letter.isVisible
+                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                                : "bg-neutral-500/10 border-neutral-500/30 text-neutral-500"
+                            }`}
+                          >
+                            {letter.isVisible ? (
+                              <>
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Tampil</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3.5 h-3.5" />
+                                <span>Hidden</span>
+                              </>
+                            )}
+                          </button>
 
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => setEditingLetter(letter)}
-                            className="p-1.5 rounded-lg border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-[var(--color-brown)] transition-colors cursor-pointer"
-                            title="Edit"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteLetter(letter._id)}
-                            className="p-1.5 rounded-lg border border-red-500/30 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
-                            title="Hapus"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                setEditingLetter(letter);
+                                setModalLang("id");
+                              }}
+                              className="p-2 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-[var(--color-brown)] transition-colors cursor-pointer"
+                              title="Edit"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteLetter(letter._id)}
+                              className="p-2 rounded-xl border border-red-500/30 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
+                              title="Hapus"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {/* ════════════════ CONTACTS TAB ════════════════ */}
             {activeTab === "contacts" && (
               <div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                   <div>
-                    <h2 className="text-base font-bold">Pesan Masuk (Kontak)</h2>
-                    <p className="text-xs text-[var(--color-text-muted)]">
-                      Daftar formulir kontak yang dikirim oleh pengunjung portfolio
+                    <h2 className="text-lg font-extrabold tracking-tight">Pesan Masuk (Inbox)</h2>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                      Daftar pesan formulir yang dikirim oleh pengunjung portfolio
                     </p>
                   </div>
 
                   {contactStats && (
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-500/15 text-red-600">
+                      <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500/15 text-rose-600 border border-rose-500/20">
                         {contactStats.unread} Belum Dibaca
                       </span>
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[var(--color-brown)]/15 text-[var(--color-brown)]">
+                      <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[var(--color-brown)]/15 text-[var(--color-brown)] border border-[var(--color-brown)]/20">
                         {contactStats.total} Total Pesan
                       </span>
                     </div>
@@ -1247,18 +1568,19 @@ export default function AdminDashboardPage() {
 
                 <div className="space-y-3">
                   {contacts.length === 0 ? (
-                    <div className="p-8 text-center border border-dashed border-[var(--color-brown-light)]/30 rounded-2xl text-xs text-[var(--color-text-muted)]">
-                      Belum ada pesan yang masuk.
+                    <div className="p-12 text-center border border-dashed border-[var(--color-brown-light)]/30 rounded-2xl text-xs text-[var(--color-text-muted)]">
+                      <Inbox className="w-8 h-8 mx-auto text-[var(--color-brown-light)] mb-2 opacity-50" />
+                      <p className="font-semibold">Belum ada pesan yang masuk dari pengunjung.</p>
                     </div>
                   ) : (
                     contacts.map((contact) => (
                       <div
                         key={contact._id}
                         onClick={() => handleViewContact(contact)}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        className={`p-4.5 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                           contact.status === "unread"
-                            ? "bg-[var(--color-cream-dark)]/80 border-[var(--color-brown)] shadow-xs"
-                            : "bg-[var(--color-cream-dark)]/30 border-[var(--color-brown-light)]/20 hover:border-[var(--color-brown-light)]/40"
+                            ? "bg-[var(--color-cream-dark)]/70 border-[var(--color-brown)] shadow-xs"
+                            : "bg-[var(--color-cream-dark)]/30 border-[var(--color-brown-light)]/20 hover:border-[var(--color-brown-light)]/40 hover:bg-[var(--color-cream-dark)]/40"
                         }`}
                       >
                         <div className="flex-1 min-w-0">
@@ -1266,7 +1588,7 @@ export default function AdminDashboardPage() {
                             <span
                               className={`w-2 h-2 rounded-full ${
                                 contact.status === "unread"
-                                  ? "bg-red-500"
+                                  ? "bg-rose-500"
                                   : contact.status === "replied"
                                   ? "bg-emerald-500"
                                   : "bg-neutral-400"
@@ -1279,7 +1601,7 @@ export default function AdminDashboardPage() {
                               &lt;{contact.email}&gt;
                             </span>
                           </div>
-                          <h4 className="text-xs font-semibold text-[var(--color-text-main)] truncate">
+                          <h4 className="text-xs font-bold text-[var(--color-text-main)] truncate">
                             {contact.subject}
                           </h4>
                           <p className="text-xs text-[var(--color-text-muted)] line-clamp-1 mt-0.5">
@@ -1288,7 +1610,7 @@ export default function AdminDashboardPage() {
                         </div>
 
                         <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
-                          <span className="text-[11px] text-[var(--color-text-muted)]">
+                          <span className="text-[11px] text-[var(--color-text-muted)] font-medium">
                             {new Date(contact.createdAt).toLocaleDateString("id-ID", {
                               day: "numeric",
                               month: "short",
@@ -1296,9 +1618,9 @@ export default function AdminDashboardPage() {
                             })}
                           </span>
                           <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                            className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase ${
                               contact.status === "unread"
-                                ? "bg-red-500/20 text-red-600"
+                                ? "bg-rose-500/20 text-rose-600"
                                 : contact.status === "replied"
                                 ? "bg-emerald-500/20 text-emerald-600"
                                 : "bg-neutral-500/20 text-neutral-600"
@@ -1315,80 +1637,121 @@ export default function AdminDashboardPage() {
             )}
           </div>
         )}
-      </div>
+      </main>
 
       {/* ════════════════ MODAL: EDIT/CREATE CERTIFICATE ════════════════ */}
       {editingCert && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--color-brown-light)]/20 mb-4">
-              <h3 className="font-bold text-sm">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+            <div className="flex items-center justify-between p-5 border-b border-[var(--color-brown-light)]/20">
+              <h3 className="font-extrabold text-base">
                 {editingCert._id ? "Edit Sertifikat" : "Tambah Sertifikat Baru"}
               </h3>
-              <button onClick={() => setEditingCert(null)} className="cursor-pointer">
-                <X className="w-4 h-4 text-[var(--color-text-muted)]" />
+              <button
+                onClick={() => setEditingCert(null)}
+                className="p-1 rounded-lg hover:bg-[var(--color-brown-light)]/10 text-[var(--color-text-muted)] cursor-pointer"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveCert} className="space-y-3.5 text-xs">
-              <div>
-                <label className="block font-semibold mb-1">Judul (Bahasa Indonesia)</label>
-                <input
-                  type="text"
-                  required
-                  value={editingCert.title?.id || ""}
-                  onChange={(e) =>
-                    setEditingCert({
-                      ...editingCert,
-                      title: { ...(editingCert.title || { id: "", en: "" }), id: e.target.value },
-                    })
-                  }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
-                />
+            <form onSubmit={handleSaveCert} className="p-5 overflow-y-auto space-y-4 text-xs">
+              {/* Bilingual tabs */}
+              <div className="flex items-center gap-2 border-b border-[var(--color-brown-light)]/20 pb-2">
+                <button
+                  type="button"
+                  onClick={() => setModalLang("id")}
+                  className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                    modalLang === "id"
+                      ? "bg-[var(--color-brown)] text-white"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]"
+                  }`}
+                >
+                  🇮🇩 Bahasa Indonesia
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalLang("en")}
+                  className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                    modalLang === "en"
+                      ? "bg-[var(--color-brown)] text-white"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]"
+                  }`}
+                >
+                  🇬🇧 English
+                </button>
               </div>
 
-              <div>
-                <label className="block font-semibold mb-1">Judul (English)</label>
-                <input
-                  type="text"
-                  required
-                  value={editingCert.title?.en || ""}
-                  onChange={(e) =>
-                    setEditingCert({
-                      ...editingCert,
-                      title: { ...(editingCert.title || { id: "", en: "" }), en: e.target.value },
-                    })
-                  }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+              {modalLang === "id" ? (
                 <div>
-                  <label className="block font-semibold mb-1">Penerbit (Issuer)</label>
+                  <label className="block font-bold mb-1.5">Judul Sertifikat (Bahasa Indonesia)</label>
                   <input
                     type="text"
                     required
+                    placeholder="mis: Pelatihan Kurikulum Merdeka Jenjang SMA"
+                    value={editingCert.title?.id || ""}
+                    onChange={(e) =>
+                      setEditingCert({
+                        ...editingCert,
+                        title: {
+                          ...(editingCert.title || { id: "", en: "" }),
+                          id: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="block font-bold mb-1.5">Certificate Title (English)</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Independent Curriculum Training for High School"
+                    value={editingCert.title?.en || ""}
+                    onChange={(e) =>
+                      setEditingCert({
+                        ...editingCert,
+                        title: {
+                          ...(editingCert.title || { id: "", en: "" }),
+                          en: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block font-bold mb-1.5">Penerbit (Issuer)</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Kemdikbud / GNIK / Universitas"
                     value={editingCert.issuer || ""}
                     onChange={(e) => setEditingCert({ ...editingCert, issuer: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">Tanggal (mis: Mei 2024)</label>
+                  <label className="block font-bold mb-1.5">Tanggal (mis: 17 Juli 2024)</label>
                   <input
                     type="text"
                     required
+                    placeholder="Juli 2024"
                     value={editingCert.date || ""}
                     onChange={(e) => setEditingCert({ ...editingCert, date: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-semibold mb-1">Kategori</label>
+                  <label className="block font-bold mb-1.5">Kategori</label>
                   <select
                     value={editingCert.category || "Technology"}
                     onChange={(e) =>
@@ -1397,7 +1760,7 @@ export default function AdminDashboardPage() {
                         category: e.target.value as Certificate["category"],
                       })
                     }
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-semibold"
                   >
                     <option value="Technology">Technology</option>
                     <option value="Professional">Professional</option>
@@ -1407,19 +1770,21 @@ export default function AdminDashboardPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">Skor / Nilai (Opsional)</label>
+                  <label className="block font-bold mb-1.5">Skor / Nilai (Opsional)</label>
                   <input
                     type="text"
-                    placeholder="mis: 95/100 atau Grade A"
+                    placeholder="mis: 96/100 atau Grade A"
                     value={editingCert.score || ""}
                     onChange={(e) => setEditingCert({ ...editingCert, score: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold mb-1">URL Gambar (pisahkan dengan koma jika banyak)</label>
+                <label className="block font-bold mb-1.5">
+                  URL Gambar (pisahkan dengan koma jika ada halaman belakang)
+                </label>
                 <input
                   type="text"
                   placeholder="/certificates/cert1.jpg, /certificates/cert1_back.jpg"
@@ -1433,47 +1798,58 @@ export default function AdminDashboardPage() {
                         .filter(Boolean),
                     })
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-mono text-[11px]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3.5 pt-1">
                 <div>
-                  <label className="block font-semibold mb-1">Urutan Tampil (Order)</label>
+                  <label className="block font-bold mb-1.5">Urutan Tampil (Order)</label>
                   <input
                     type="number"
                     value={editingCert.order || 1}
-                    onChange={(e) => setEditingCert({ ...editingCert, order: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                    onChange={(e) =>
+                      setEditingCert({ ...editingCert, order: Number(e.target.value) })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-bold text-center"
                   />
                 </div>
-                <div className="flex items-center pt-5">
-                  <label className="flex items-center gap-2 cursor-pointer">
+                <div className="flex items-center pt-6">
+                  <label className="flex items-center gap-2.5 cursor-pointer font-bold">
                     <input
                       type="checkbox"
                       checked={editingCert.isVisible ?? true}
-                      onChange={(e) => setEditingCert({ ...editingCert, isVisible: e.target.checked })}
-                      className="rounded accent-[var(--color-brown)] w-4 h-4"
+                      onChange={(e) =>
+                        setEditingCert({ ...editingCert, isVisible: e.target.checked })
+                      }
+                      className="rounded accent-[var(--color-brown)] w-4 h-4 cursor-pointer"
                     />
-                    <span className="font-semibold">Tampilkan di Publik</span>
+                    <span>Tampilkan di Publik</span>
                   </label>
                 </div>
               </div>
 
-              <div className="pt-4 flex justify-end gap-2 border-t border-[var(--color-brown-light)]/20">
+              <div className="pt-4 flex justify-end gap-2.5 border-t border-[var(--color-brown-light)]/20">
                 <button
                   type="button"
                   onClick={() => setEditingCert(null)}
-                  className="px-4 py-2 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 font-medium cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 font-bold cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading === "saveCert"}
-                  className="px-4 py-2 rounded-xl bg-[var(--color-brown)] text-white font-semibold hover:bg-[var(--color-brown-dark)] cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-[var(--color-brown)] text-white font-bold hover:bg-[var(--color-brown-dark)] cursor-pointer shadow-md shadow-[var(--color-brown)]/20 flex items-center gap-2"
                 >
-                  {actionLoading === "saveCert" ? "Menyimpan..." : "Simpan Sertifikat"}
+                  {actionLoading === "saveCert" ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Simpan Sertifikat</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -1483,87 +1859,135 @@ export default function AdminDashboardPage() {
 
       {/* ════════════════ MODAL: EDIT/CREATE PROJECT ════════════════ */}
       {editingProject && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--color-brown-light)]/20 mb-4">
-              <h3 className="font-bold text-sm">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+            <div className="flex items-center justify-between p-5 border-b border-[var(--color-brown-light)]/20">
+              <h3 className="font-extrabold text-base">
                 {editingProject._id ? "Edit Proyek" : "Tambah Proyek Baru"}
               </h3>
-              <button onClick={() => setEditingProject(null)} className="cursor-pointer">
-                <X className="w-4 h-4 text-[var(--color-text-muted)]" />
+              <button
+                onClick={() => setEditingProject(null)}
+                className="p-1 rounded-lg hover:bg-[var(--color-brown-light)]/10 text-[var(--color-text-muted)] cursor-pointer"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveProject} className="space-y-3.5 text-xs">
+            <form onSubmit={handleSaveProject} className="p-5 overflow-y-auto space-y-4 text-xs">
+              <div className="flex items-center gap-2 border-b border-[var(--color-brown-light)]/20 pb-2">
+                <button
+                  type="button"
+                  onClick={() => setModalLang("id")}
+                  className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                    modalLang === "id"
+                      ? "bg-[var(--color-brown)] text-white"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]"
+                  }`}
+                >
+                  🇮🇩 Bahasa Indonesia
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalLang("en")}
+                  className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                    modalLang === "en"
+                      ? "bg-[var(--color-brown)] text-white"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]"
+                  }`}
+                >
+                  🇬🇧 English
+                </button>
+              </div>
+
+              {modalLang === "id" ? (
+                <>
+                  <div>
+                    <label className="block font-bold mb-1.5">Judul Proyek (ID)</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Modul Ajar Termokimia Interaktif"
+                      value={editingProject.title?.id || ""}
+                      onChange={(e) =>
+                        setEditingProject({
+                          ...editingProject,
+                          title: {
+                            ...(editingProject.title || { id: "", en: "" }),
+                            id: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold mb-1.5">Deskripsi Proyek (ID)</label>
+                    <textarea
+                      rows={3}
+                      required
+                      placeholder="Jelaskan tujuan, metode, dan dampak karya pendidikan ini..."
+                      value={editingProject.description?.id || ""}
+                      onChange={(e) =>
+                        setEditingProject({
+                          ...editingProject,
+                          description: {
+                            ...(editingProject.description || { id: "", en: "" }),
+                            id: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium leading-relaxed"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block font-bold mb-1.5">Project Title (EN)</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Interactive Thermochemistry Teaching Module"
+                      value={editingProject.title?.en || ""}
+                      onChange={(e) =>
+                        setEditingProject({
+                          ...editingProject,
+                          title: {
+                            ...(editingProject.title || { id: "", en: "" }),
+                            en: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold mb-1.5">Project Description (EN)</label>
+                    <textarea
+                      rows={3}
+                      required
+                      placeholder="Describe the pedagogy, objectives, and impact..."
+                      value={editingProject.description?.en || ""}
+                      onChange={(e) =>
+                        setEditingProject({
+                          ...editingProject,
+                          description: {
+                            ...(editingProject.description || { id: "", en: "" }),
+                            en: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium leading-relaxed"
+                    />
+                  </div>
+                </>
+              )}
+
               <div>
-                <label className="block font-semibold mb-1">Judul Proyek (ID)</label>
+                <label className="block font-bold mb-1.5">Tags (pisahkan dengan koma)</label>
                 <input
                   type="text"
-                  required
-                  value={editingProject.title?.id || ""}
-                  onChange={(e) =>
-                    setEditingProject({
-                      ...editingProject,
-                      title: { ...(editingProject.title || { id: "", en: "" }), id: e.target.value },
-                    })
-                  }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">Judul Proyek (EN)</label>
-                <input
-                  type="text"
-                  required
-                  value={editingProject.title?.en || ""}
-                  onChange={(e) =>
-                    setEditingProject({
-                      ...editingProject,
-                      title: { ...(editingProject.title || { id: "", en: "" }), en: e.target.value },
-                    })
-                  }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">Deskripsi (ID)</label>
-                <textarea
-                  rows={3}
-                  required
-                  value={editingProject.description?.id || ""}
-                  onChange={(e) =>
-                    setEditingProject({
-                      ...editingProject,
-                      description: { ...(editingProject.description || { id: "", en: "" }), id: e.target.value },
-                    })
-                  }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">Deskripsi (EN)</label>
-                <textarea
-                  rows={3}
-                  required
-                  value={editingProject.description?.en || ""}
-                  onChange={(e) =>
-                    setEditingProject({
-                      ...editingProject,
-                      description: { ...(editingProject.description || { id: "", en: "" }), en: e.target.value },
-                    })
-                  }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">Tags (pisahkan dengan koma)</label>
-                <input
-                  type="text"
-                  placeholder="Kimia, Modul Ajar, STEM, Kurikulum Merdeka"
+                  placeholder="Kimia, STEM, Modul Ajar, PBL"
                   value={editingProject.tags?.join(", ") || ""}
                   onChange={(e) =>
                     setEditingProject({
@@ -1574,70 +1998,85 @@ export default function AdminDashboardPage() {
                         .filter(Boolean),
                     })
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-semibold mb-1">URL Path File PDF</label>
+                  <label className="block font-bold mb-1.5">Path / URL File PDF</label>
                   <input
                     type="text"
                     placeholder="/projects/modul-termokimia.pdf"
                     value={editingProject.pdfPath || ""}
-                    onChange={(e) => setEditingProject({ ...editingProject, pdfPath: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                    onChange={(e) =>
+                      setEditingProject({ ...editingProject, pdfPath: e.target.value })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-mono text-[11px]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">Nama File (Download Label)</label>
+                  <label className="block font-bold mb-1.5">Nama File Download</label>
                   <input
                     type="text"
-                    placeholder="Modul_Ajar_Kimia.pdf"
+                    placeholder="Modul_Termokimia_Irma.pdf"
                     value={editingProject.fileName || ""}
-                    onChange={(e) => setEditingProject({ ...editingProject, fileName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                    onChange={(e) =>
+                      setEditingProject({ ...editingProject, fileName: e.target.value })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3.5 pt-1">
                 <div>
-                  <label className="block font-semibold mb-1">Urutan</label>
+                  <label className="block font-bold mb-1.5">Urutan Tampil (Order)</label>
                   <input
                     type="number"
                     value={editingProject.order || 1}
-                    onChange={(e) => setEditingProject({ ...editingProject, order: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                    onChange={(e) =>
+                      setEditingProject({ ...editingProject, order: Number(e.target.value) })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-bold text-center"
                   />
                 </div>
-                <div className="flex items-center pt-5">
-                  <label className="flex items-center gap-2 cursor-pointer">
+                <div className="flex items-center pt-6">
+                  <label className="flex items-center gap-2.5 cursor-pointer font-bold">
                     <input
                       type="checkbox"
                       checked={editingProject.isVisible ?? true}
-                      onChange={(e) => setEditingProject({ ...editingProject, isVisible: e.target.checked })}
-                      className="rounded accent-[var(--color-brown)] w-4 h-4"
+                      onChange={(e) =>
+                        setEditingProject({ ...editingProject, isVisible: e.target.checked })
+                      }
+                      className="rounded accent-[var(--color-brown)] w-4 h-4 cursor-pointer"
                     />
-                    <span className="font-semibold">Tampilkan di Publik</span>
+                    <span>Tampilkan di Publik</span>
                   </label>
                 </div>
               </div>
 
-              <div className="pt-4 flex justify-end gap-2 border-t border-[var(--color-brown-light)]/20">
+              <div className="pt-4 flex justify-end gap-2.5 border-t border-[var(--color-brown-light)]/20">
                 <button
                   type="button"
                   onClick={() => setEditingProject(null)}
-                  className="px-4 py-2 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 font-medium cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 font-bold cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading === "saveProject"}
-                  className="px-4 py-2 rounded-xl bg-[var(--color-brown)] text-white font-semibold hover:bg-[var(--color-brown-dark)] cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-[var(--color-brown)] text-white font-bold hover:bg-[var(--color-brown-dark)] cursor-pointer shadow-md shadow-[var(--color-brown)]/20 flex items-center gap-2"
                 >
-                  {actionLoading === "saveProject" ? "Menyimpan..." : "Simpan Proyek"}
+                  {actionLoading === "saveProject" ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Simpan Proyek</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -1647,21 +2086,24 @@ export default function AdminDashboardPage() {
 
       {/* ════════════════ MODAL: EDIT/CREATE EXPERIENCE ════════════════ */}
       {editingExp && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--color-brown-light)]/20 mb-4">
-              <h3 className="font-bold text-sm">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+            <div className="flex items-center justify-between p-5 border-b border-[var(--color-brown-light)]/20">
+              <h3 className="font-extrabold text-base">
                 {editingExp._id ? "Edit Pengalaman" : "Tambah Pengalaman Baru"}
               </h3>
-              <button onClick={() => setEditingExp(null)} className="cursor-pointer">
-                <X className="w-4 h-4 text-[var(--color-text-muted)]" />
+              <button
+                onClick={() => setEditingExp(null)}
+                className="p-1 rounded-lg hover:bg-[var(--color-brown-light)]/10 text-[var(--color-text-muted)] cursor-pointer"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveExp} className="space-y-3.5 text-xs">
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleSaveExp} className="p-5 overflow-y-auto space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-semibold mb-1">Tipe Pengalaman</label>
+                  <label className="block font-bold mb-1.5">Tipe Pengalaman</label>
                   <select
                     value={editingExp.type || "internship"}
                     onChange={(e) =>
@@ -1670,77 +2112,85 @@ export default function AdminDashboardPage() {
                         type: e.target.value as Experience["type"],
                       })
                     }
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-bold"
                   >
                     <option value="internship">Magang / Mengajar</option>
                     <option value="organization">Organisasi</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">Periode (mis: Jul - Des 2024)</label>
+                  <label className="block font-bold mb-1.5">Periode (mis: Jul - Des 2024)</label>
                   <input
                     type="text"
                     required
+                    placeholder="Juli - Desember 2024"
                     value={editingExp.period || ""}
                     onChange={(e) => setEditingExp({ ...editingExp, period: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold mb-1">Posisi / Peran (ID)</label>
+                <label className="block font-bold mb-1.5">Instansi / Sekolah / Organisasi</label>
                 <input
                   type="text"
                   required
-                  placeholder="Guru PPL Kimia"
-                  value={editingExp.title?.id || ""}
-                  onChange={(e) =>
-                    setEditingExp({
-                      ...editingExp,
-                      title: { ...(editingExp.title || { id: "", en: "" }), id: e.target.value },
-                    })
-                  }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">Posisi / Peran (EN)</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Chemistry Teaching Intern"
-                  value={editingExp.title?.en || ""}
-                  onChange={(e) =>
-                    setEditingExp({
-                      ...editingExp,
-                      title: { ...(editingExp.title || { id: "", en: "" }), en: e.target.value },
-                    })
-                  }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">Instansi / Sekolah / Organisasi</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="SMA Negeri 1 Palembang"
+                  placeholder="SMA Negeri 1 Palembang / Himpunan Mahasiswa Kimia"
                   value={editingExp.org || ""}
                   onChange={(e) => setEditingExp({ ...editingExp, org: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                 />
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block font-bold mb-1.5">Peran / Jabatan (ID)</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Guru PPL Kimia"
+                    value={editingExp.title?.id || ""}
+                    onChange={(e) =>
+                      setEditingExp({
+                        ...editingExp,
+                        title: {
+                          ...(editingExp.title || { id: "", en: "" }),
+                          id: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold mb-1.5">Role / Position (EN)</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Chemistry Teaching Intern"
+                    value={editingExp.title?.en || ""}
+                    onChange={(e) =>
+                      setEditingExp({
+                        ...editingExp,
+                        title: {
+                          ...(editingExp.title || { id: "", en: "" }),
+                          en: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block font-semibold mb-1">
-                  Poin Tugas / Prestasi (pisahkan baris baru untuk tiap poin)
+                <label className="block font-bold mb-1.5">
+                  Rincian Tugas / Prestasi (pisahkan dengan baris baru untuk setiap butir)
                 </label>
                 <textarea
                   rows={4}
-                  placeholder="Merancang modul pembelajaran kimia berbasis kurikulum merdeka&#10;Melaksanakan asesmen diagnostik dan formatif"
+                  placeholder="Merancang modul ajar dan praktikum kimia terintegrasi&#10;Melakukan pendampingan belajar bagi siswa berprestasi"
                   value={editingExp.points?.map((p) => p.id || p.en).join("\n") || ""}
                   onChange={(e) => {
                     const lines = e.target.value.split("\n").filter((l) => l.trim().length > 0);
@@ -1749,47 +2199,58 @@ export default function AdminDashboardPage() {
                       points: lines.map((line) => ({ id: line.trim(), en: line.trim() })),
                     });
                   }}
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium leading-relaxed"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3.5 pt-1">
                 <div>
-                  <label className="block font-semibold mb-1">Urutan</label>
+                  <label className="block font-bold mb-1.5">Urutan</label>
                   <input
                     type="number"
                     value={editingExp.order || 1}
-                    onChange={(e) => setEditingExp({ ...editingExp, order: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                    onChange={(e) =>
+                      setEditingExp({ ...editingExp, order: Number(e.target.value) })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-bold text-center"
                   />
                 </div>
-                <div className="flex items-center pt-5">
-                  <label className="flex items-center gap-2 cursor-pointer">
+                <div className="flex items-center pt-6">
+                  <label className="flex items-center gap-2.5 cursor-pointer font-bold">
                     <input
                       type="checkbox"
                       checked={editingExp.isVisible ?? true}
-                      onChange={(e) => setEditingExp({ ...editingExp, isVisible: e.target.checked })}
-                      className="rounded accent-[var(--color-brown)] w-4 h-4"
+                      onChange={(e) =>
+                        setEditingExp({ ...editingExp, isVisible: e.target.checked })
+                      }
+                      className="rounded accent-[var(--color-brown)] w-4 h-4 cursor-pointer"
                     />
-                    <span className="font-semibold">Tampilkan di Publik</span>
+                    <span>Tampilkan di Publik</span>
                   </label>
                 </div>
               </div>
 
-              <div className="pt-4 flex justify-end gap-2 border-t border-[var(--color-brown-light)]/20">
+              <div className="pt-4 flex justify-end gap-2.5 border-t border-[var(--color-brown-light)]/20">
                 <button
                   type="button"
                   onClick={() => setEditingExp(null)}
-                  className="px-4 py-2 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 font-medium cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 font-bold cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading === "saveExp"}
-                  className="px-4 py-2 rounded-xl bg-[var(--color-brown)] text-white font-semibold hover:bg-[var(--color-brown-dark)] cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-[var(--color-brown)] text-white font-bold hover:bg-[var(--color-brown-dark)] cursor-pointer shadow-md shadow-[var(--color-brown)]/20 flex items-center gap-2"
                 >
-                  {actionLoading === "saveExp" ? "Menyimpan..." : "Simpan Pengalaman"}
+                  {actionLoading === "saveExp" ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Simpan Pengalaman</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -1799,14 +2260,17 @@ export default function AdminDashboardPage() {
 
       {/* ════════════════ MODAL: EDIT/CREATE SKILL GROUP ════════════════ */}
       {editingSkillGroup && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--color-brown-light)]/20 mb-4">
-              <h3 className="font-bold text-sm">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 rounded-3xl max-w-md w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between pb-3.5 border-b border-[var(--color-brown-light)]/20 mb-4">
+              <h3 className="font-extrabold text-base">
                 {editingSkillGroup._id ? "Edit Grup Keahlian" : "Tambah Grup Keahlian Baru"}
               </h3>
-              <button onClick={() => setEditingSkillGroup(null)} className="cursor-pointer">
-                <X className="w-4 h-4 text-[var(--color-text-muted)]" />
+              <button
+                onClick={() => setEditingSkillGroup(null)}
+                className="p-1 rounded-lg hover:bg-[var(--color-brown-light)]/10 text-[var(--color-text-muted)] cursor-pointer"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -1816,7 +2280,10 @@ export default function AdminDashboardPage() {
                 setActionLoading("saveSkillGroup");
                 try {
                   if (editingSkillGroup._id) {
-                    const updated = await api.admin.updateSkillGroup(editingSkillGroup._id, editingSkillGroup);
+                    const updated = await api.admin.updateSkillGroup(
+                      editingSkillGroup._id,
+                      editingSkillGroup,
+                    );
                     setSkills((prev) =>
                       prev.map((g) => (g._id === editingSkillGroup._id ? updated : g)),
                     );
@@ -1833,10 +2300,10 @@ export default function AdminDashboardPage() {
                   setActionLoading(null);
                 }
               }}
-              className="space-y-3.5 text-xs"
+              className="space-y-4 text-xs"
             >
               <div>
-                <label className="block font-semibold mb-1">Kategori</label>
+                <label className="block font-bold mb-1.5">Kategori Utama</label>
                 <select
                   value={editingSkillGroup.category || "hard"}
                   onChange={(e) =>
@@ -1845,60 +2312,66 @@ export default function AdminDashboardPage() {
                       category: e.target.value as SkillGroup["category"],
                     })
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-bold"
                 >
-                  <option value="hard">Hard Skills / Teknis</option>
-                  <option value="soft">Soft Skills / Interpersonal</option>
-                  <option value="language">Bahasa / Language</option>
+                  <option value="hard">Hard Skills (Teknis & Pembelajaran)</option>
+                  <option value="soft">Soft Skills (Interpersonal & Kepemimpinan)</option>
+                  <option value="language">Bahasa (Language Proficiency)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block font-semibold mb-1">Label Grup (ID)</label>
+                <label className="block font-bold mb-1.5">Nama Grup (ID)</label>
                 <input
                   type="text"
                   required
-                  placeholder="mis: Pedagogik & Kurikulum"
+                  placeholder="Pedagogik & Kurikulum"
                   value={editingSkillGroup.label?.id || ""}
                   onChange={(e) =>
                     setEditingSkillGroup({
                       ...editingSkillGroup,
-                      label: { ...(editingSkillGroup.label || { id: "", en: "" }), id: e.target.value },
+                      label: {
+                        ...(editingSkillGroup.label || { id: "", en: "" }),
+                        id: e.target.value,
+                      },
                     })
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold mb-1">Label Grup (EN)</label>
+                <label className="block font-bold mb-1.5">Group Label (EN)</label>
                 <input
                   type="text"
                   required
-                  placeholder="mis: Pedagogy & Curriculum"
+                  placeholder="Pedagogy & Curriculum"
                   value={editingSkillGroup.label?.en || ""}
                   onChange={(e) =>
                     setEditingSkillGroup({
                       ...editingSkillGroup,
-                      label: { ...(editingSkillGroup.label || { id: "", en: "" }), en: e.target.value },
+                      label: {
+                        ...(editingSkillGroup.label || { id: "", en: "" }),
+                        en: e.target.value,
+                      },
                     })
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                 />
               </div>
 
-              <div className="pt-4 flex justify-end gap-2 border-t border-[var(--color-brown-light)]/20">
+              <div className="pt-4 flex justify-end gap-2.5 border-t border-[var(--color-brown-light)]/20">
                 <button
                   type="button"
                   onClick={() => setEditingSkillGroup(null)}
-                  className="px-4 py-2 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 font-medium cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 font-bold cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading === "saveSkillGroup"}
-                  className="px-4 py-2 rounded-xl bg-[var(--color-brown)] text-white font-semibold hover:bg-[var(--color-brown-dark)] cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-[var(--color-brown)] text-white font-bold hover:bg-[var(--color-brown-dark)] cursor-pointer shadow-md shadow-[var(--color-brown)]/20 flex items-center gap-2"
                 >
                   Simpan Grup
                 </button>
@@ -1910,75 +2383,92 @@ export default function AdminDashboardPage() {
 
       {/* ════════════════ MODAL: EDIT/CREATE RECOMMENDATION LETTER ════════════════ */}
       {editingLetter && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--color-brown-light)]/20 mb-4">
-              <h3 className="font-bold text-sm">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+            <div className="flex items-center justify-between p-5 border-b border-[var(--color-brown-light)]/20">
+              <h3 className="font-extrabold text-base">
                 {editingLetter._id ? "Edit Surat Rekomendasi" : "Tambah Surat Rekomendasi Baru"}
               </h3>
-              <button onClick={() => setEditingLetter(null)} className="cursor-pointer">
-                <X className="w-4 h-4 text-[var(--color-text-muted)]" />
+              <button
+                onClick={() => setEditingLetter(null)}
+                className="p-1 rounded-lg hover:bg-[var(--color-brown-light)]/10 text-[var(--color-text-muted)] cursor-pointer"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveLetter} className="space-y-3.5 text-xs">
+            <form onSubmit={handleSaveLetter} className="p-5 overflow-y-auto space-y-4 text-xs">
               <div>
-                <label className="block font-semibold mb-1">Judul Surat (ID)</label>
+                <label className="block font-bold mb-1.5">Judul Surat (ID)</label>
                 <input
                   type="text"
                   required
+                  placeholder="Surat Rekomendasi Dekan FKIP"
                   value={editingLetter.title?.id || ""}
                   onChange={(e) =>
                     setEditingLetter({
                       ...editingLetter,
-                      title: { ...(editingLetter.title || { id: "", en: "" }), id: e.target.value },
+                      title: {
+                        ...(editingLetter.title || { id: "", en: "" }),
+                        id: e.target.value,
+                      },
                     })
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold mb-1">Judul Surat (EN)</label>
+                <label className="block font-bold mb-1.5">Title (EN)</label>
                 <input
                   type="text"
                   required
+                  placeholder="Dean Recommendation Letter"
                   value={editingLetter.title?.en || ""}
                   onChange={(e) =>
                     setEditingLetter({
                       ...editingLetter,
-                      title: { ...(editingLetter.title || { id: "", en: "" }), en: e.target.value },
+                      title: {
+                        ...(editingLetter.title || { id: "", en: "" }),
+                        en: e.target.value,
+                      },
                     })
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-semibold mb-1">Pemberi Rekomendasi (Issuer)</label>
+                  <label className="block font-bold mb-1.5">Pemberi Rekomendasi (Issuer)</label>
                   <input
                     type="text"
                     required
+                    placeholder="Prof. Dr. H. Hartono, M.A."
                     value={editingLetter.issuer || ""}
-                    onChange={(e) => setEditingLetter({ ...editingLetter, issuer: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                    onChange={(e) =>
+                      setEditingLetter({ ...editingLetter, issuer: e.target.value })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">Tanggal Surat</label>
+                  <label className="block font-bold mb-1.5">Tanggal Surat</label>
                   <input
                     type="text"
                     required
+                    placeholder="25 September 2024"
                     value={editingLetter.date || ""}
                     onChange={(e) => setEditingLetter({ ...editingLetter, date: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold mb-1">URL Gambar Halaman (pisahkan koma)</label>
+                <label className="block font-bold mb-1.5">
+                  URL Gambar Halaman (pisahkan koma jika multi-halaman)
+                </label>
                 <input
                   type="text"
                   placeholder="/letters/letter1_page1.jpg, /letters/letter1_page2.jpg"
@@ -1992,22 +2482,22 @@ export default function AdminDashboardPage() {
                         .filter(Boolean),
                     })
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-mono text-[11px]"
                 />
               </div>
 
-              <div className="pt-4 flex justify-end gap-2 border-t border-[var(--color-brown-light)]/20">
+              <div className="pt-4 flex justify-end gap-2.5 border-t border-[var(--color-brown-light)]/20">
                 <button
                   type="button"
                   onClick={() => setEditingLetter(null)}
-                  className="px-4 py-2 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 font-medium cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 font-bold cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading === "saveLetter"}
-                  className="px-4 py-2 rounded-xl bg-[var(--color-brown)] text-white font-semibold hover:bg-[var(--color-brown-dark)] cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-[var(--color-brown)] text-white font-bold hover:bg-[var(--color-brown-dark)] cursor-pointer shadow-md shadow-[var(--color-brown)]/20 flex items-center gap-2"
                 >
                   Simpan Surat
                 </button>
@@ -2019,48 +2509,55 @@ export default function AdminDashboardPage() {
 
       {/* ════════════════ MODAL: DETAIL PESAN KONTAK ════════════════ */}
       {viewingContact && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--color-brown-light)]/20 mb-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 rounded-3xl max-w-lg w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between pb-3.5 border-b border-[var(--color-brown-light)]/20 mb-4">
               <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-[var(--color-brown)]" />
-                <h3 className="font-bold text-sm">Pesan dari {viewingContact.name}</h3>
+                <Mail className="w-5 h-5 text-[var(--color-brown)]" />
+                <h3 className="font-extrabold text-base">Pesan dari {viewingContact.name}</h3>
               </div>
-              <button onClick={() => setViewingContact(null)} className="cursor-pointer">
-                <X className="w-4 h-4 text-[var(--color-text-muted)]" />
+              <button
+                onClick={() => setViewingContact(null)}
+                className="p-1 rounded-lg hover:bg-[var(--color-brown-light)]/10 text-[var(--color-text-muted)] cursor-pointer"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="bg-[var(--color-cream-dark)]/40 p-3 rounded-xl space-y-1">
+            <div className="space-y-4 text-xs">
+              <div className="bg-[var(--color-cream-dark)]/40 p-3.5 rounded-2xl space-y-1.5 border border-[var(--color-brown-light)]/15">
                 <p>
-                  <span className="font-semibold text-[var(--color-text-muted)]">Pengirim:</span>{" "}
-                  {viewingContact.name}
+                  <span className="font-bold text-[var(--color-text-muted)]">Pengirim:</span>{" "}
+                  <span className="font-semibold text-[var(--color-text-main)]">
+                    {viewingContact.name}
+                  </span>
                 </p>
                 <p>
-                  <span className="font-semibold text-[var(--color-text-muted)]">Email:</span>{" "}
+                  <span className="font-bold text-[var(--color-text-muted)]">Email:</span>{" "}
                   <a
-                    href={`mailto:${viewingContact.email}?subject=Re: ${encodeURIComponent(viewingContact.subject)}`}
-                    className="text-[var(--color-brown)] underline"
+                    href={`mailto:${viewingContact.email}?subject=Re: ${encodeURIComponent(
+                      viewingContact.subject,
+                    )}`}
+                    className="text-[var(--color-brown)] font-semibold underline"
                   >
                     {viewingContact.email}
                   </a>
                 </p>
                 <p>
-                  <span className="font-semibold text-[var(--color-text-muted)]">Waktu:</span>{" "}
+                  <span className="font-bold text-[var(--color-text-muted)]">Tanggal Masuk:</span>{" "}
                   {new Date(viewingContact.createdAt).toLocaleString("id-ID")}
                 </p>
                 <p>
-                  <span className="font-semibold text-[var(--color-text-muted)]">Status:</span>{" "}
-                  <span className="uppercase font-bold text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-brown)]/15 text-[var(--color-brown)]">
+                  <span className="font-bold text-[var(--color-text-muted)]">Status:</span>{" "}
+                  <span className="uppercase font-bold text-[10px] px-2 py-0.5 rounded bg-[var(--color-brown)]/15 text-[var(--color-brown)]">
                     {viewingContact.status}
                   </span>
                 </p>
               </div>
 
               <div>
-                <h4 className="font-bold text-sm mb-1">{viewingContact.subject}</h4>
-                <div className="p-3.5 rounded-xl bg-[var(--color-cream-dark)]/30 border border-[var(--color-brown-light)]/20 whitespace-pre-wrap leading-relaxed">
+                <h4 className="font-extrabold text-sm mb-1.5">{viewingContact.subject}</h4>
+                <div className="p-4 rounded-2xl bg-[var(--color-cream-dark)]/25 border border-[var(--color-brown-light)]/20 whitespace-pre-wrap leading-relaxed">
                   {viewingContact.message}
                 </div>
               </div>
@@ -2068,9 +2565,9 @@ export default function AdminDashboardPage() {
               <div className="pt-4 flex items-center justify-between border-t border-[var(--color-brown-light)]/20">
                 <button
                   onClick={() => handleDeleteContact(viewingContact._id)}
-                  className="px-3 py-1.5 rounded-xl border border-red-500/30 text-red-500 hover:bg-red-500/10 font-semibold cursor-pointer flex items-center gap-1"
+                  className="px-3.5 py-2 rounded-xl border border-red-500/30 text-red-500 hover:bg-red-500/10 font-bold cursor-pointer flex items-center gap-1.5"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                   <span>Hapus</span>
                 </button>
 
@@ -2078,16 +2575,19 @@ export default function AdminDashboardPage() {
                   {viewingContact.status !== "replied" && (
                     <button
                       onClick={() => handleMarkReplied(viewingContact._id)}
-                      className="px-3 py-1.5 rounded-xl border border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 font-semibold cursor-pointer"
+                      className="px-3.5 py-2 rounded-xl border border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 font-bold cursor-pointer"
                     >
-                      Tandai Sudah Dibalas
+                      Tandai Dibalas
                     </button>
                   )}
                   <a
-                    href={`mailto:${viewingContact.email}?subject=Re: ${encodeURIComponent(viewingContact.subject)}`}
-                    className="px-4 py-1.5 rounded-xl bg-[var(--color-brown)] text-white font-semibold hover:bg-[var(--color-brown-dark)] cursor-pointer"
+                    href={`mailto:${viewingContact.email}?subject=Re: ${encodeURIComponent(
+                      viewingContact.subject,
+                    )}`}
+                    className="px-4 py-2 rounded-xl bg-[var(--color-brown)] text-white font-bold hover:bg-[var(--color-brown-dark)] cursor-pointer shadow-md shadow-[var(--color-brown)]/20 inline-flex items-center gap-1.5"
                   >
-                    Balas via Email
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>Balas via Email</span>
                   </a>
                 </div>
               </div>
@@ -2096,85 +2596,161 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* ════════════════ MODAL: CHANGE PASSWORD ════════════════ */}
+      {/* ════════════════ MODAL: GANTI PASSWORD ════════════════ */}
       {isPasswordModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--color-brown-light)]/20 mb-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between pb-3.5 border-b border-[var(--color-brown-light)]/20 mb-4">
               <div className="flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-[var(--color-brown)]" />
-                <h3 className="font-bold text-sm">Ganti Password Admin</h3>
+                <KeyRound className="w-5 h-5 text-[var(--color-brown)]" />
+                <h3 className="font-extrabold text-base">Ganti Password Admin</h3>
               </div>
               <button
                 onClick={() => setIsPasswordModalOpen(false)}
-                className="cursor-pointer"
+                className="p-1 rounded-lg hover:bg-[var(--color-brown-light)]/10 text-[var(--color-text-muted)] cursor-pointer"
               >
-                <X className="w-4 h-4 text-[var(--color-text-muted)]" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleChangePassword} className="space-y-3 text-xs">
+            <form onSubmit={handleChangePassword} className="space-y-3.5 text-xs">
               <div>
-                <label className="block font-semibold mb-1">Password Saat Ini</label>
+                <label className="block font-bold mb-1.5">Password Saat Ini</label>
                 <input
                   type="password"
                   required
+                  placeholder="••••••••••••"
                   value={passwordForm.currentPassword}
                   onChange={(e) =>
                     setPasswordForm({ ...passwordForm, currentPassword: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold mb-1">Password Baru</label>
+                <label className="block font-bold mb-1.5">Password Baru</label>
                 <input
                   type="password"
                   required
                   minLength={6}
+                  placeholder="Minimal 6 karakter"
                   value={passwordForm.newPassword}
                   onChange={(e) =>
                     setPasswordForm({ ...passwordForm, newPassword: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold mb-1">Konfirmasi Password Baru</label>
+                <label className="block font-bold mb-1.5">Konfirmasi Password Baru</label>
                 <input
                   type="password"
                   required
                   minLength={6}
+                  placeholder="Ketik ulang password baru"
                   value={passwordForm.confirmPassword}
                   onChange={(e) =>
                     setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] outline-none focus:border-[var(--color-brown)]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
                 />
               </div>
 
-              <div className="pt-3 flex justify-end gap-2 border-t border-[var(--color-brown-light)]/20">
+              <div className="pt-4 flex justify-end gap-2.5 border-t border-[var(--color-brown-light)]/20">
                 <button
                   type="button"
                   onClick={() => setIsPasswordModalOpen(false)}
-                  className="px-3 py-1.5 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 font-medium cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 font-bold cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading === "password"}
-                  className="px-4 py-1.5 rounded-xl bg-[var(--color-brown)] text-white font-semibold hover:bg-[var(--color-brown-dark)] cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-[var(--color-brown)] text-white font-bold hover:bg-[var(--color-brown-dark)] cursor-pointer shadow-md shadow-[var(--color-brown)]/20 flex items-center gap-2"
                 >
-                  {actionLoading === "password" ? "Menyimpan..." : "Update Password"}
+                  {actionLoading === "password" ? "Memperbarui..." : "Update Password"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Component: Empty State with Terminal Seed Hint ────────────────────────
+function EmptyStateCard({
+  title,
+  description,
+  onAdd,
+  onCopySeed,
+  copied,
+}: {
+  title: string;
+  description: string;
+  onAdd: () => void;
+  onCopySeed: (text: string) => void;
+  copied: boolean;
+}) {
+  return (
+    <div className="rounded-3xl border border-dashed border-[var(--color-brown-light)]/40 p-8 sm:p-12 text-center bg-[var(--color-cream-dark)]/20 flex flex-col items-center justify-center max-w-2xl mx-auto shadow-xs">
+      <div className="w-14 h-14 rounded-2xl bg-[var(--color-brown)]/10 text-[var(--color-brown)] flex items-center justify-center mb-4">
+        <Sparkles className="w-7 h-7" />
+      </div>
+
+      <h3 className="font-extrabold text-base sm:text-lg text-[var(--color-text-main)] mb-1">
+        {title}
+      </h3>
+      <p className="text-xs text-[var(--color-text-muted)] max-w-md mx-auto leading-relaxed mb-6">
+        {description}
+      </p>
+
+      <div className="flex flex-col sm:flex-row items-center gap-3 mb-6">
+        <button
+          onClick={onAdd}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--color-brown)] text-white text-xs font-bold hover:bg-[var(--color-brown-dark)] shadow-md shadow-[var(--color-brown)]/20 transition-all cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Tambah Manual Pertama</span>
+        </button>
+      </div>
+
+      {/* Terminal Seed Instruction Box */}
+      <div className="w-full bg-[var(--color-cream-dark)]/50 dark:bg-black/30 border border-[var(--color-brown-light)]/25 rounded-2xl p-4 text-left">
+        <div className="flex items-center justify-between mb-2 pb-2 border-b border-[var(--color-brown-light)]/20">
+          <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-brown)]">
+            <Terminal className="w-4 h-4" />
+            <span>Cara Seed Otomatis Lewat Terminal Container Backend:</span>
+          </div>
+          <button
+            onClick={() => onCopySeed("node dist/seed.js")}
+            className="text-[11px] font-bold text-[var(--color-brown)] hover:underline inline-flex items-center gap-1 cursor-pointer"
+          >
+            {copied ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-emerald-600">Tersalin!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5" />
+                <span>Salin Perintah</span>
+              </>
+            )}
+          </button>
+        </div>
+        <p className="text-[11px] text-[var(--color-text-muted)] mb-2 leading-relaxed">
+          Buka menu <strong>Terminal</strong> pada container <strong>irma-backend</strong> di Mini VPS Panel, lalu ketik perintah berikut:
+        </p>
+        <div className="font-mono text-xs bg-black/80 text-emerald-400 p-2.5 rounded-xl flex items-center justify-between select-all">
+          <span>node dist/seed.js</span>
+          <span className="text-[10px] text-neutral-400 font-sans">Tekan Enter</span>
+        </div>
+      </div>
     </div>
   );
 }
