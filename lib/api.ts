@@ -1,26 +1,26 @@
 export function getBaseUrl(): string {
-  // 1. In browser: dynamic detection based on current domain
+  // 1. Explicit environment variable if provided
+  const envUrl = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/+$/, "");
+  if (envUrl && envUrl.length > 0 && !envUrl.includes("localhost")) {
+    return envUrl.endsWith("/api") ? envUrl : `${envUrl}/api`;
+  }
+
+  // 2. In browser: dynamic detection based on current domain
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
     if (host.endsWith("josapratama.com")) {
-      return "https://irma.josapratama.com/api";
+      return "https://irma-backend.josapratama.com/api";
     }
     if (host.endsWith("josapratama.cloud")) {
-      return "https://irma.josapratama.cloud/api";
+      return "https://irma-backend.josapratama.cloud/api";
     }
     if (host !== "localhost" && host !== "127.0.0.1") {
-      return `${window.location.protocol}//irma.${host}/api`;
+      return `${window.location.protocol}//irma-backend.${host}/api`;
     }
   }
 
-  // 2. Explicit environment variable if provided
-  const envUrl = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/+$/, "");
-  if (envUrl && envUrl.length > 0) {
-    return envUrl;
-  }
-
-  // 3. Production fallback
-  return "https://irma.josapratama.com/api";
+  // 3. Fallback
+  return "https://irma-backend.josapratama.com/api";
 }
 
 /**
