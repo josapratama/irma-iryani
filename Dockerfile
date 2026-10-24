@@ -11,6 +11,8 @@ RUN npm install
 COPY . .
 
 # Build standalone Next.js
+ARG NEXT_PUBLIC_API_URL="https://irma.josapratama.com/api"
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 

@@ -1,6 +1,27 @@
-const BASE_URL = (
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api"
-).trim().replace(/\/+$/, "");
+export function getBaseUrl(): string {
+  // 1. In browser: dynamic detection based on current domain
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host.endsWith("josapratama.com")) {
+      return "https://irma.josapratama.com/api";
+    }
+    if (host.endsWith("josapratama.cloud")) {
+      return "https://irma.josapratama.cloud/api";
+    }
+    if (host !== "localhost" && host !== "127.0.0.1") {
+      return `${window.location.protocol}//irma.${host}/api`;
+    }
+  }
+
+  // 2. Explicit environment variable if provided
+  const envUrl = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/+$/, "");
+  if (envUrl && envUrl.length > 0) {
+    return envUrl;
+  }
+
+  // 3. Production fallback
+  return "https://irma.josapratama.com/api";
+}
 
 /**
  * AbortSignal.timeout polyfill — AbortSignal.timeout tidak tersedia di
@@ -60,8 +81,9 @@ export async function apiFetch<T>(
   init?: RequestInit & { timeoutMs?: number },
 ): Promise<T> {
   const { timeoutMs = 10_000, ...fetchInit } = init ?? {};
+  const baseUrl = getBaseUrl();
 
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(`${baseUrl}${path}`, {
     headers: { "Content-Type": "application/json", ...fetchInit.headers },
     signal: timeoutSignal(timeoutMs),
     ...fetchInit,
