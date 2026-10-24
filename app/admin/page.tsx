@@ -549,55 +549,68 @@ export default function AdminDashboardPage() {
   }, [experiences, searchQuery, categoryFilter]);
 
   return (
-    <div className="min-h-screen bg-[var(--color-cream)] text-[var(--color-text-main)] flex flex-col font-sans selection:bg-[var(--color-brown-light)]/30">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[var(--color-cream)] text-[var(--color-text-main)] flex flex-col font-sans selection:bg-[var(--color-brown-light)]/30">
       {/* ── Topbar Header ───────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-30 bg-[var(--color-cream)]/90 dark:bg-[var(--color-cream-dark)]/85 backdrop-blur-md border-b border-[var(--color-brown-light)]/20 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[var(--color-brown)] to-[var(--color-brown-light)] text-white flex items-center justify-center font-bold text-sm shadow-md shadow-[var(--color-brown)]/20">
-            II
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="font-extrabold text-sm sm:text-base tracking-tight leading-none text-[var(--color-text-main)]">
-                Irma Iryani
-              </h1>
-              <span className="text-[10px] font-mono uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-[var(--color-brown)]/15 text-[var(--color-brown)]">
-                Admin
-              </span>
+      <header className="sticky top-0 z-30 w-full bg-[var(--color-cream)]/95 dark:bg-[var(--color-cream-dark)]/90 backdrop-blur-md border-b border-[var(--color-brown-light)]/20 px-3.5 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 shadow-xs">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 w-full min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-[var(--color-brown)] to-[var(--color-brown-light)] text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-md shadow-[var(--color-brown)]/20 shrink-0">
+              II
             </div>
-            <p className="text-[11px] text-[var(--color-text-muted)] truncate max-w-[160px] sm:max-w-none mt-0.5">
-              {adminEmail}
-            </p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h1 className="font-extrabold text-xs sm:text-base tracking-tight leading-none text-[var(--color-text-main)] truncate">
+                  Irma Iryani
+                </h1>
+                <span className="text-[9px] sm:text-[10px] font-mono uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-[var(--color-brown)]/15 text-[var(--color-brown)] shrink-0">
+                  Admin
+                </span>
+              </div>
+              <p className="text-[10px] sm:text-[11px] text-[var(--color-text-muted)] truncate max-w-[130px] sm:max-w-[220px] md:max-w-none mt-0.5">
+                {adminEmail}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          <Link
-            href="/"
-            target="_blank"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-xs font-semibold text-[var(--color-text-main)] transition-colors"
-          >
-            <ExternalLink className="w-3.5 h-3.5 text-[var(--color-brown)]" />
-            <span>Lihat Website</span>
-          </Link>
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <button
+              onClick={checkAuthAndLoad}
+              disabled={isLoading}
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-[var(--color-text-muted)] hover:text-[var(--color-brown)] transition-colors cursor-pointer inline-flex items-center gap-1.5"
+              title="Muat Ulang Data"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+              <span className="hidden md:inline text-xs font-semibold">Refresh</span>
+            </button>
 
-          <button
-            onClick={() => setIsPasswordModalOpen(true)}
-            className="p-2 sm:px-3 sm:py-1.5 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-xs font-semibold text-[var(--color-text-main)] transition-colors inline-flex items-center gap-1.5 cursor-pointer"
-            title="Ganti Password"
-          >
-            <KeyRound className="w-3.5 h-3.5 text-[var(--color-brown)]" />
-            <span className="hidden sm:inline">Password</span>
-          </button>
+            <Link
+              href="/"
+              target="_blank"
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-xs font-semibold text-[var(--color-text-main)] transition-colors inline-flex items-center gap-1.5"
+              title="Lihat Website"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-[var(--color-brown)]" />
+              <span className="hidden md:inline">Website</span>
+            </Link>
 
-          <button
-            onClick={handleLogout}
-            className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer border border-red-500/20"
-            title="Keluar"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Keluar</span>
-          </button>
+            <button
+              onClick={() => setIsPasswordModalOpen(true)}
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border border-[var(--color-brown-light)]/30 hover:bg-[var(--color-brown)]/10 text-xs font-semibold text-[var(--color-text-main)] transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+              title="Ganti Password"
+            >
+              <KeyRound className="w-3.5 h-3.5 text-[var(--color-brown)]" />
+              <span className="hidden md:inline">Password</span>
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer border border-red-500/20"
+              title="Keluar"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Keluar</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -626,13 +639,14 @@ export default function AdminDashboardPage() {
       )}
 
       {/* ── Main Container ──────────────────────────────────────────────────── */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+      <main className="flex-1 max-w-7xl w-full min-w-0 mx-auto px-3.5 sm:px-6 lg:px-8 py-3.5 sm:py-6 flex flex-col gap-4 sm:gap-6 overflow-hidden">
         {/* ── Quick Overview Metric Cards ───────────────────────────────────── */}
-        <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <section className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 w-full min-w-0">
           {[
             {
               id: "certificates",
               label: "Sertifikat",
+              shortLabel: "Sertifikat",
               icon: Award,
               count: certificates.length,
               color: "text-amber-600 bg-amber-500/10 border-amber-500/20",
@@ -640,6 +654,7 @@ export default function AdminDashboardPage() {
             {
               id: "projects",
               label: "Proyek & Modul",
+              shortLabel: "Proyek",
               icon: Briefcase,
               count: projects.length,
               color: "text-blue-600 bg-blue-500/10 border-blue-500/20",
@@ -647,6 +662,7 @@ export default function AdminDashboardPage() {
             {
               id: "experiences",
               label: "Pengalaman",
+              shortLabel: "Pengalaman",
               icon: Building2,
               count: experiences.length,
               color: "text-emerald-600 bg-emerald-500/10 border-emerald-500/20",
@@ -654,6 +670,7 @@ export default function AdminDashboardPage() {
             {
               id: "skills",
               label: "Grup Keahlian",
+              shortLabel: "Keahlian",
               icon: Cpu,
               count: skills.length,
               color: "text-purple-600 bg-purple-500/10 border-purple-500/20",
@@ -661,6 +678,7 @@ export default function AdminDashboardPage() {
             {
               id: "letters",
               label: "Surat Rekomendasi",
+              shortLabel: "Rekomendasi",
               icon: FileText,
               count: letters.length,
               color: "text-indigo-600 bg-indigo-500/10 border-indigo-500/20",
@@ -668,6 +686,7 @@ export default function AdminDashboardPage() {
             {
               id: "contacts",
               label: "Pesan Masuk",
+              shortLabel: "Pesan",
               icon: Inbox,
               count: contacts.length,
               badge: contactStats?.unread || 0,
@@ -684,28 +703,29 @@ export default function AdminDashboardPage() {
                   setSearchQuery("");
                   setCategoryFilter("all");
                 }}
-                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between group ${
+                className={`p-2.5 sm:p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
                   isCurrent
-                    ? "bg-[var(--color-cream-dark)]/70 border-[var(--color-brown)] shadow-sm scale-[1.02]"
+                    ? "bg-[var(--color-cream-dark)]/85 border-[var(--color-brown)] shadow-sm ring-1 ring-[var(--color-brown)]/40"
                     : "bg-[var(--color-cream-dark)]/30 border-[var(--color-brown-light)]/20 hover:border-[var(--color-brown-light)]/40 hover:bg-[var(--color-cream-dark)]/50"
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className={`p-2 rounded-xl border ${metric.color}`}>
-                    <Icon className="w-4 h-4" />
+                <div className="flex items-center justify-between gap-1 w-full">
+                  <div className={`p-1.5 sm:p-2 rounded-xl border ${metric.color}`}>
+                    <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                   {metric.badge !== undefined && metric.badge > 0 && (
-                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white animate-pulse">
-                      {metric.badge} Baru
+                    <span className="px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-rose-500 text-white animate-pulse">
+                      {metric.badge}
                     </span>
                   )}
                 </div>
-                <div className="mt-3">
-                  <div className="text-xl font-extrabold tracking-tight text-[var(--color-text-main)]">
+                <div className="mt-2 sm:mt-3 min-w-0">
+                  <div className="text-base sm:text-xl font-extrabold tracking-tight text-[var(--color-text-main)] leading-tight">
                     {metric.count}
                   </div>
-                  <div className="text-[11px] font-semibold text-[var(--color-text-muted)] group-hover:text-[var(--color-brown)] transition-colors truncate">
-                    {metric.label}
+                  <div className="text-[10px] sm:text-[11px] font-semibold text-[var(--color-text-muted)] group-hover:text-[var(--color-brown)] transition-colors truncate mt-0.5">
+                    <span className="sm:hidden">{metric.shortLabel}</span>
+                    <span className="hidden sm:inline">{metric.label}</span>
                   </div>
                 </div>
               </button>
@@ -714,66 +734,57 @@ export default function AdminDashboardPage() {
         </section>
 
         {/* ── Main Navigation Pill Tabs ──────────────────────────────────────── */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-[var(--color-brown-light)]/20 custom-scrollbar">
-          {[
-            { id: "certificates", label: "Sertifikat", icon: Award, count: certificates.length },
-            { id: "projects", label: "Proyek & Modul", icon: Briefcase, count: projects.length },
-            { id: "experiences", label: "Pengalaman", icon: Building2, count: experiences.length },
-            { id: "skills", label: "Keahlian", icon: Cpu, count: skills.length },
-            { id: "letters", label: "Surat Rekomendasi", icon: FileText, count: letters.length },
-            {
-              id: "contacts",
-              label: "Pesan Masuk",
-              icon: Inbox,
-              badge: contactStats?.unread || 0,
-            },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id as TabType);
-                  setSearchQuery("");
-                  setCategoryFilter("all");
-                }}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                  isActive
-                    ? "bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white shadow-md shadow-[var(--color-brown)]/20"
-                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] hover:bg-[var(--color-brown-light)]/10"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
-                {tab.badge !== undefined && tab.badge > 0 ? (
-                  <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold">
-                    {tab.badge}
-                  </span>
-                ) : tab.count !== undefined ? (
-                  <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
-                      isActive
-                        ? "bg-white/20 text-white"
-                        : "bg-[var(--color-brown-light)]/20 text-[var(--color-text-muted)]"
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
-
-          <div className="ml-auto pl-2 flex items-center gap-2">
-            <button
-              onClick={checkAuthAndLoad}
-              disabled={isLoading}
-              className="p-2.5 rounded-xl border border-[var(--color-brown-light)]/30 text-[var(--color-text-muted)] hover:text-[var(--color-brown)] hover:bg-[var(--color-brown)]/10 transition-colors cursor-pointer"
-              title="Muat Ulang Data"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
-            </button>
+        <div className="w-full min-w-0 max-w-full">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2 border-b border-[var(--color-brown-light)]/20 no-scrollbar touch-pan-x">
+            {[
+              { id: "certificates", label: "Sertifikat", icon: Award, count: certificates.length },
+              { id: "projects", label: "Proyek & Modul", icon: Briefcase, count: projects.length },
+              { id: "experiences", label: "Pengalaman", icon: Building2, count: experiences.length },
+              { id: "skills", label: "Keahlian", icon: Cpu, count: skills.length },
+              { id: "letters", label: "Surat Rekomendasi", icon: FileText, count: letters.length },
+              {
+                id: "contacts",
+                label: "Pesan Masuk",
+                icon: Inbox,
+                badge: contactStats?.unread || 0,
+              },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id as TabType);
+                    setSearchQuery("");
+                    setCategoryFilter("all");
+                  }}
+                  className={`shrink-0 flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white shadow-md shadow-[var(--color-brown)]/20"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] hover:bg-[var(--color-brown-light)]/10"
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span>{tab.label}</span>
+                  {tab.badge !== undefined && tab.badge > 0 ? (
+                    <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold">
+                      {tab.badge}
+                    </span>
+                  ) : tab.count !== undefined ? (
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
+                        isActive
+                          ? "bg-white/20 text-white"
+                          : "bg-[var(--color-brown-light)]/20 text-[var(--color-text-muted)]"
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -808,7 +819,7 @@ export default function AdminDashboardPage() {
                       });
                       setModalLang("id");
                     }}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer self-start sm:self-auto"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer w-full sm:w-auto justify-center shrink-0"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Tambah Sertifikat</span>
@@ -980,7 +991,7 @@ export default function AdminDashboardPage() {
                       });
                       setModalLang("id");
                     }}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer self-start sm:self-auto"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer w-full sm:w-auto justify-center shrink-0"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Tambah Proyek</span>
@@ -1118,7 +1129,7 @@ export default function AdminDashboardPage() {
                       });
                       setModalLang("id");
                     }}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer self-start sm:self-auto"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer w-full sm:w-auto justify-center shrink-0"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Tambah Pengalaman</span>
@@ -1265,7 +1276,7 @@ export default function AdminDashboardPage() {
                       });
                       setModalLang("id");
                     }}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer self-start sm:self-auto"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer w-full sm:w-auto justify-center shrink-0"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Tambah Grup Keahlian</span>
@@ -1436,7 +1447,7 @@ export default function AdminDashboardPage() {
                       });
                       setModalLang("id");
                     }}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer self-start sm:self-auto"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-brown)] to-[var(--color-brown-dark)] text-white text-xs font-bold hover:opacity-95 transition-all shadow-md shadow-[var(--color-brown)]/20 cursor-pointer w-full sm:w-auto justify-center shrink-0"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Tambah Surat</span>

@@ -58,6 +58,7 @@
 
   ::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
   }
   ::-webkit-scrollbar-track {
     background: var(--color-cream-dark);
@@ -69,6 +70,15 @@
   ::selection {
     background: var(--color-brown-light);
     color: var(--color-cream);
+  }
+
+  /* Utility to hide scrollbars while retaining scrollability */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
