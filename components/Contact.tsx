@@ -14,6 +14,7 @@ import { useThemeLanguage } from "@/context/ThemeLanguageContext";
 import { useMotion } from "@/lib/motion";
 import emailjs from "@emailjs/browser";
 import { api } from "@/lib/api";
+import { useProfile } from "@/hooks/useProfile";
 
 // EmailJS env vars
 const SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID ?? "";
@@ -26,10 +27,12 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
 // ─────────────────────────────────────────────
 export default function Contact() {
   const { language, t } = useThemeLanguage();
+  const { data: profile } = useProfile();
+
   const c = {
     sectionTag: t("contact.section_tag", "Kontak"),
     title: t("contact.title", "Hubungi Saya"),
-    subtitle: language === "en" ? "Open to job opportunities, collaborations, or just having a conversation." : (language === "ja" ? "仕事の機会、コラボレーション、またはカジュアルな会話を歓迎します。" : "Terbuka untuk peluang kerja, kolaborasi, atau sekadar berdiskusi."),
+    subtitle: (profile?.contactSubtitle && profile.contactSubtitle[language]) || profile?.contactSubtitle?.en || profile?.contactSubtitle?.id || (language === "en" ? "Open to job opportunities, collaborations, or just having a conversation." : (language === "ja" ? "仕事の機会、コラボレーション、またはカジュアルな会話を歓迎します。" : "Terbuka untuk peluang kerja, kolaborasi, atau sekadar berdiskusi.")),
     namePlaceholder: t("contact.name_placeholder", "Nama Anda"),
     emailPlaceholder: t("contact.email_placeholder", "Email Anda"),
     subjectPlaceholder: language === "en" ? "Subject" : (language === "ja" ? "件名" : "Subjek"),
@@ -114,8 +117,9 @@ export default function Contact() {
     const body = encodeURIComponent(
       `Nama: ${form.name}\nEmail: ${form.email}\n\n${form.message}`,
     );
+    const mailToTarget = profile?.email || "irmairyani698@gmail.com";
     window.open(
-      `mailto:irmairyani698@gmail.com?subject=${subject}&body=${body}`,
+      `mailto:${mailToTarget}?subject=${subject}&body=${body}`,
     );
     setStatus("idle");
   };
@@ -124,19 +128,19 @@ export default function Contact() {
     {
       icon: <Mail size={18} />,
       label: "Email",
-      value: "irmairyani698@gmail.com",
-      href: "mailto:irmairyani698@gmail.com",
+      value: profile?.email || "irmairyani698@gmail.com",
+      href: `mailto:${profile?.email || "irmairyani698@gmail.com"}`,
     },
     {
       icon: <Phone size={18} />,
       label: "Telepon",
-      value: "0887437204107",
-      href: "tel:0887437204107",
+      value: profile?.phone || "0887437204107",
+      href: `tel:${profile?.phone || "0887437204107"}`,
     },
     {
       icon: <MapPin size={18} />,
       label: "Lokasi",
-      value: "Prabumulih, Sumatera Selatan",
+      value: profile?.location || "Prabumulih, Sumatera Selatan",
       href: null,
     },
   ];

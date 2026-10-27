@@ -34,6 +34,8 @@ import {
   Calendar,
   Globe,
   SlidersHorizontal,
+  GraduationCap,
+  User,
 } from "lucide-react";
 import {
   api,
@@ -47,9 +49,18 @@ import {
   type RecommendationLetter,
   type ContactMessage,
   type ContactStats,
+  type ProfileData,
+  type EducationItem,
 } from "@/lib/api";
+import ProfileTab from "./components/ProfileTab";
+import AboutTab from "./components/AboutTab";
+import EducationsTab from "./components/EducationsTab";
+import EducationModal from "./components/EducationModal";
 
 type TabType =
+  | "profile"
+  | "about"
+  | "educations"
   | "certificates"
   | "projects"
   | "experiences"
@@ -62,7 +73,7 @@ export default function AdminDashboardPage() {
 
   // Auth & Page State
   const [adminEmail, setAdminEmail] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<TabType>("certificates");
+  const [activeTab, setActiveTab] = useState<TabType>("profile");
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -74,6 +85,8 @@ export default function AdminDashboardPage() {
   const [copiedCmd, setCopiedCmd] = useState(false);
 
   // Data States
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [educations, setEducations] = useState<EducationItem[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]);
@@ -84,6 +97,8 @@ export default function AdminDashboardPage() {
 
   // Modal States
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isEduModalOpen, setIsEduModalOpen] = useState(false);
+  const [editingEdu, setEditingEdu] = useState<Partial<EducationItem> | null>(null);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -139,6 +154,8 @@ export default function AdminDashboardPage() {
     setIsLoading(true);
     try {
       const [
+        profileData,
+        educationsData,
         certsData,
         projsData,
         expsData,
@@ -147,6 +164,8 @@ export default function AdminDashboardPage() {
         contactsData,
         statsData,
       ] = await Promise.allSettled([
+        api.admin.getProfile(),
+        api.admin.getEducations(),
         api.admin.getCertificates(),
         api.admin.getProjects(),
         api.admin.getExperiences(),
@@ -156,6 +175,8 @@ export default function AdminDashboardPage() {
         api.admin.getContactStats(),
       ]);
 
+      if (profileData.status === "fulfilled") setProfile(profileData.value || null);
+      if (educationsData.status === "fulfilled") setEducations(educationsData.value || []);
       if (certsData.status === "fulfilled") setCertificates(certsData.value || []);
       if (projsData.status === "fulfilled") setProjects(projsData.value || []);
       if (expsData.status === "fulfilled") setExperiences(expsData.value || []);
@@ -204,6 +225,66 @@ export default function AdminDashboardPage() {
       showFeedback("error", err instanceof Error ? err.message : "Gagal mengubah password.");
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  // ── Profile Handlers ─────────────────────────────────────────────────────
+  const handleSaveProfile = async (data: Partial<ProfileData>) => {
+    setActionLoading("profile");
+    try {
+      const updated = await api.admin.updateProfile(data);
+      setProfile(updated);
+      showFeedback("success", "Profil & konten berhasil disimpan!");
+    } catch (err: unknown) {
+      showFeedback("error", err instanceof Error ? err.message : "Gagal menyimpan profil.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // ── Education Handlers ───────────────────────────────────────────────────
+  const handleSaveEducation = async (data: Partial<EducationItem>) => {
+    setActionLoading("education");
+    try {
+      if (data._id) {
+        const updated = await api.admin.updateEducation(data._id, data);
+        setEducations((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
+        showFeedback("success", "Riwayat pendidikan berhasil diperbarui!");
+      } else {
+        const created = await api.admin.createEducation(data as Omit<EducationItem, "_id">);
+        setEducations((prev) => [...prev, created]);
+        showFeedback("success", "Riwayat pendidikan berhasil ditambahkan!");
+      }
+      setIsEduModalOpen(false);
+      setEditingEdu(null);
+    } catch (err: unknown) {
+      showFeedback("error", err instanceof Error ? err.message : "Gagal menyimpan pendidikan.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeleteEducation = async (id: string) => {
+    setActionLoading("education");
+    try {
+      await api.admin.deleteEducation(id);
+      setEducations((prev) => prev.filter((e) => e._id !== id));
+      showFeedback("success", "Riwayat pendidikan berhasil dihapus.");
+    } catch (err: unknown) {
+      showFeedback("error", err instanceof Error ? err.message : "Gagal menghapus pendidikan.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleToggleEduVisibility = async (edu: EducationItem) => {
+    const newVis = !edu.isVisible;
+    try {
+      const updated = await api.admin.updateEducation(edu._id, { isVisible: newVis });
+      setEducations((prev) => prev.map((e) => (e._id === edu._id ? updated : e)));
+      showFeedback("success", `Visibilitas ${edu.degree.id} diperbarui.`);
+    } catch {
+      showFeedback("error", "Gagal memperbarui visibilitas.");
     }
   };
 
@@ -641,8 +722,32 @@ export default function AdminDashboardPage() {
       {/* ── Main Container ──────────────────────────────────────────────────── */}
       <main className="flex-1 max-w-7xl w-full min-w-0 mx-auto px-3.5 sm:px-6 lg:px-8 py-3.5 sm:py-6 flex flex-col gap-4 sm:gap-6 overflow-hidden">
         {/* ── Quick Overview Metric Cards ───────────────────────────────────── */}
-        <section className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 w-full min-w-0">
+        <section className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-9 gap-2 sm:gap-3 w-full min-w-0">
           {[
+            {
+              id: "profile",
+              label: "Profil & Hero",
+              shortLabel: "Profil",
+              icon: User,
+              count: profile?.name ? 1 : 0,
+              color: "text-amber-700 bg-amber-500/10 border-amber-500/20",
+            },
+            {
+              id: "about",
+              label: "Tentang Saya",
+              shortLabel: "Tentang",
+              icon: Sparkles,
+              count: profile?.aboutHighlights?.length || 0,
+              color: "text-orange-600 bg-orange-500/10 border-orange-500/20",
+            },
+            {
+              id: "educations",
+              label: "Pendidikan",
+              shortLabel: "Pendidikan",
+              icon: GraduationCap,
+              count: educations.length,
+              color: "text-cyan-600 bg-cyan-500/10 border-cyan-500/20",
+            },
             {
               id: "certificates",
               label: "Sertifikat",
@@ -737,6 +842,9 @@ export default function AdminDashboardPage() {
         <div className="w-full min-w-0 max-w-full">
           <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2 border-b border-[var(--color-brown-light)]/20 no-scrollbar touch-pan-x">
             {[
+              { id: "profile", label: "Profil & Hero", icon: User },
+              { id: "about", label: "Tentang Saya", icon: Sparkles },
+              { id: "educations", label: "Pendidikan", icon: GraduationCap, count: educations.length },
               { id: "certificates", label: "Sertifikat", icon: Award, count: certificates.length },
               { id: "projects", label: "Proyek & Modul", icon: Briefcase, count: projects.length },
               { id: "experiences", label: "Pengalaman", icon: Building2, count: experiences.length },
@@ -796,6 +904,42 @@ export default function AdminDashboardPage() {
           </div>
         ) : (
           <div className="flex-1 flex flex-col gap-5">
+            {/* ════════════════ PROFILE TAB ════════════════ */}
+            {activeTab === "profile" && (
+              <ProfileTab
+                profile={profile}
+                onSave={handleSaveProfile}
+                isLoading={actionLoading === "profile"}
+              />
+            )}
+
+            {/* ════════════════ ABOUT TAB ════════════════ */}
+            {activeTab === "about" && (
+              <AboutTab
+                profile={profile}
+                onSave={handleSaveProfile}
+                isLoading={actionLoading === "profile"}
+              />
+            )}
+
+            {/* ════════════════ EDUCATIONS TAB ════════════════ */}
+            {activeTab === "educations" && (
+              <EducationsTab
+                educations={educations}
+                onOpenCreate={() => {
+                  setEditingEdu({});
+                  setIsEduModalOpen(true);
+                }}
+                onOpenEdit={(edu) => {
+                  setEditingEdu(edu);
+                  setIsEduModalOpen(true);
+                }}
+                onDelete={handleDeleteEducation}
+                onToggleVisibility={handleToggleEduVisibility}
+                isLoading={actionLoading === "education"}
+              />
+            )}
+
             {/* ════════════════ CERTIFICATES TAB ════════════════ */}
             {activeTab === "certificates" && (
               <div>
@@ -2689,6 +2833,18 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* ════════════════ MODAL: EDUCATION ════════════════ */}
+      <EducationModal
+        isOpen={isEduModalOpen}
+        onClose={() => {
+          setIsEduModalOpen(false);
+          setEditingEdu(null);
+        }}
+        onSave={handleSaveEducation}
+        initialData={editingEdu}
+        isLoading={actionLoading === "education"}
+      />
     </div>
   );
 }

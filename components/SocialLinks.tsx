@@ -40,18 +40,37 @@ const socials = [
   },
 ];
 
+import type { SocialLinkItem } from "@/lib/api";
+import { Globe } from "lucide-react";
+
 interface SocialLinksProps {
   orientation?: "horizontal" | "vertical";
   size?: "sm" | "md";
   showLabel?: boolean;
+  links?: SocialLinkItem[];
 }
 
 export default function SocialLinks({
   orientation = "horizontal",
   size = "md",
   showLabel = false,
+  links,
 }: SocialLinksProps) {
   const { stagger, slideUp } = useMotion();
+
+  const items = (links && links.length > 0)
+    ? links.map((l) => {
+        const lower = l.name.toLowerCase();
+        const found = socials.find((s) => s.name.toLowerCase() === lower);
+        return {
+          name: l.name,
+          url: l.url,
+          label: l.label || l.name,
+          icon: found ? found.icon : <Globe className="h-4 w-4" />,
+          color: found ? found.color : "hover:bg-brown hover:text-white hover:border-brown",
+        };
+      })
+    : socials;
 
   const btnSize = size === "sm" ? "h-8 w-8 text-xs" : "h-9 w-9";
 
@@ -62,7 +81,7 @@ export default function SocialLinks({
       animate="visible"
       className={`flex gap-2.5 ${orientation === "vertical" ? "flex-col" : "flex-row flex-wrap"}`}
     >
-      {socials.map((s) => (
+      {items.map((s) => (
         <motion.a
           key={s.name}
           href={s.url}

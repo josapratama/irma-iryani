@@ -116,6 +116,12 @@ export async function adminFetch<T>(
 
 // ─── Typed API helpers ─────────────────────────────────────────────────────
 export const api = {
+  // Public Profile
+  getProfile: () => apiFetch<ProfileData>("/profile"),
+
+  // Public Educations
+  getEducations: () => apiFetch<EducationItem[]>("/educations"),
+
   // Public Certificates
   getCertificates: (category?: string) =>
     apiFetch<Certificate[]>(
@@ -340,11 +346,98 @@ export const api = {
         method: "DELETE",
         body: JSON.stringify({ ids }),
       }),
+
+    // Profile & Site Content
+    getProfile: () => adminFetch<ProfileData>("/profile"),
+    updateProfile: (data: Partial<ProfileData>) =>
+      adminFetch<ProfileData>("/profile", {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+
+    // Educations
+    getEducations: () => adminFetch<EducationItem[]>("/educations/admin/all"),
+    createEducation: (data: Partial<EducationItem>) =>
+      adminFetch<EducationItem>("/educations", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    updateEducation: (id: string, data: Partial<EducationItem>) =>
+      adminFetch<EducationItem>(`/educations/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+    deleteEducation: (id: string) =>
+      adminFetch<null>(`/educations/${id}`, {
+        method: "DELETE",
+      }),
+    reorderEducations: (ids: string[]) =>
+      adminFetch<null>("/educations/reorder", {
+        method: "PATCH",
+        body: JSON.stringify({ ids }),
+      }),
   },
 };
 
 // ─── Response types (mirror backend models) ────────────────────────────────
 export type BilingualText = Record<string, string>;
+
+export type CVItem = {
+  label: string;
+  url: string;
+  description?: string;
+};
+
+export type SocialLinkItem = {
+  name: string;
+  url: string;
+  label?: string;
+};
+
+export type AboutHighlight = {
+  label: BilingualText;
+  value: string;
+};
+
+export type ProfileData = {
+  _id?: string;
+  name: string;
+  greeting: BilingualText;
+  title: BilingualText;
+  subtitle: BilingualText;
+  description: BilingualText;
+  location: string;
+  email: string;
+  phone: string;
+  photoUrl: string;
+  gpa: string;
+  degreeBadge: string;
+  universityBadge: string;
+  cvItems: CVItem[];
+  socialLinks: SocialLinkItem[];
+  aboutTag: BilingualText;
+  aboutTitle: BilingualText;
+  aboutBio: BilingualText;
+  aboutHighlights: AboutHighlight[];
+  aboutTraits: BilingualText[];
+  contactSubtitle: BilingualText;
+  footerText: BilingualText;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type EducationItem = {
+  _id: string;
+  degree: BilingualText;
+  university: BilingualText;
+  period: BilingualText;
+  gpa: string;
+  description?: BilingualText;
+  order: number;
+  isVisible: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
 
 export type Certificate = {
   _id: string;

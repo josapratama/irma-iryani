@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Moon, Sun, Globe, Menu, X } from "lucide-react";
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
+import { useProfile } from "@/hooks/useProfile";
 
 const navDef = [
   { key: "nav.home", href: "hero", fallback: "Beranda" },
@@ -17,6 +18,7 @@ const navDef = [
 
 export default function Navbar() {
   const { theme, language, toggleTheme, toggleLanguage, t } = useThemeLanguage();
+  const { data: profile } = useProfile();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("hero");
@@ -91,7 +93,7 @@ export default function Navbar() {
           onClick={() => scrollTo("hero")}
           className="shrink-0 cursor-pointer font-bold tracking-tight text-brown transition-opacity hover:opacity-80 text-sm sm:text-base"
         >
-          Irma Iryani
+          {profile?.name || "Irma Iryani"}
           <span className="font-normal text-text-muted">.</span>
         </button>
 

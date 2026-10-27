@@ -4,27 +4,37 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
 import { useMotion } from "@/lib/motion";
+import { useProfile } from "@/hooks/useProfile";
 
 export default function About() {
   const { language, t } = useThemeLanguage();
+  const { data: profile } = useProfile();
+
   const c = {
-    sectionTag: t("about.section_tag", "Tentang Saya"),
-    title: t("about.title", "Profil Singkat"),
-    bio: t("about.bio", "Saya merupakan lulusan S1 Pendidikan Kimia Universitas Sriwijaya dengan IPK 3,90."),
-    highlights: [
-      { label: t("about.gpa", "IPK"), value: "3,90" },
-      { label: t("about.university", "Universitas"), value: "UNSRI" },
-      { label: t("about.major", "Jurusan"), value: "Pend. Kimia" },
-      { label: t("about.batch", "Angkatan"), value: "2022" },
-    ],
-    traits: [
-      language === "en" ? "Analytical" : (language === "ja" ? "分析的" : "Analitis"),
-      language === "en" ? "Meticulous" : (language === "ja" ? "几帳面" : "Teliti"),
-      language === "en" ? "Structured" : (language === "ja" ? "構造化" : "Terstruktur"),
-      language === "en" ? "Adaptive" : (language === "ja" ? "適応力" : "Adaptif"),
-      language === "en" ? "Collaborative" : (language === "ja" ? "協力的" : "Kolaboratif"),
-      language === "en" ? "Systematic" : (language === "ja" ? "体系的" : "Sistematis"),
-    ],
+    sectionTag: (profile?.aboutTag && profile.aboutTag[language]) || profile?.aboutTag?.en || profile?.aboutTag?.id || t("about.section_tag", "Tentang Saya"),
+    title: (profile?.aboutTitle && profile.aboutTitle[language]) || profile?.aboutTitle?.en || profile?.aboutTitle?.id || t("about.title", "Profil Singkat"),
+    bio: (profile?.aboutBio && profile.aboutBio[language]) || profile?.aboutBio?.en || profile?.aboutBio?.id || t("about.bio", "Saya merupakan lulusan S1 Pendidikan Kimia Universitas Sriwijaya dengan IPK 3,90."),
+    highlights: (profile?.aboutHighlights && profile.aboutHighlights.length > 0)
+      ? profile.aboutHighlights.map((h) => ({
+          label: (h.label && h.label[language]) || h.label?.en || h.label?.id || "",
+          value: h.value,
+        }))
+      : [
+          { label: t("about.gpa", "IPK"), value: "3,90" },
+          { label: t("about.university", "Universitas"), value: "UNSRI" },
+          { label: t("about.major", "Jurusan"), value: "Pend. Kimia" },
+          { label: t("about.batch", "Angkatan"), value: "2022" },
+        ],
+    traits: (profile?.aboutTraits && profile.aboutTraits.length > 0)
+      ? profile.aboutTraits.map((tr) => (tr && tr[language]) || tr?.en || tr?.id || "")
+      : [
+          language === "en" ? "Analytical" : (language === "ja" ? "分析的" : "Analitis"),
+          language === "en" ? "Meticulous" : (language === "ja" ? "几帳面" : "Teliti"),
+          language === "en" ? "Structured" : (language === "ja" ? "構造化" : "Terstruktur"),
+          language === "en" ? "Adaptive" : (language === "ja" ? "適応力" : "Adaptif"),
+          language === "en" ? "Collaborative" : (language === "ja" ? "協力的" : "Kolaboratif"),
+          language === "en" ? "Systematic" : (language === "ja" ? "体系的" : "Sistematis"),
+        ],
   };
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });

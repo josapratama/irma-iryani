@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
 import { Heart } from "lucide-react";
+import { useProfile } from "@/hooks/useProfile";
 import SocialLinks from "@/components/SocialLinks";
 
 function scrollToTop() {
@@ -11,12 +12,16 @@ function scrollToTop() {
 
 export default function Footer() {
   const { language } = useThemeLanguage();
+  const { data: profile } = useProfile();
+
+  const customFooterText = (profile?.footerText && profile.footerText[language]) || profile?.footerText?.en || profile?.footerText?.id;
+
   return (
     <footer className="border-t border-brown-light/15 px-4 py-10 sm:px-6 md:py-12 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-5">
         {/* Social links row */}
         <div className="flex justify-center">
-          <SocialLinks orientation="horizontal" size="md" showLabel />
+          <SocialLinks links={profile?.socialLinks} orientation="horizontal" size="md" showLabel />
         </div>
 
         {/* Bottom row */}

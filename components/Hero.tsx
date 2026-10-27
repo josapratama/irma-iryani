@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { MapPin, Mail, Phone, Download, ChevronDown } from "lucide-react";
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
 import { useMotion } from "@/lib/motion";
+import { useProfile } from "@/hooks/useProfile";
 import Image from "next/image";
 import SocialLinks from "@/components/SocialLinks";
 
@@ -17,15 +18,22 @@ function scrollToSection(id: string) {
 
 export default function Hero() {
   const { language, t } = useThemeLanguage();
+  const { data: profile } = useProfile();
+
   const c = {
-    greeting: t("hero.greeting", "Halo, saya"),
-    title: t("hero.title", "Lulusan S1 Pendidikan Kimia"),
-    subtitle: language === "en" ? "Analytical · Structured · Solution-Oriented" : (language === "ja" ? "分析的 · 構造化 · ソリューション志向" : "Analitis · Terstruktur · Berorientasi Solusi"),
-    description: t("hero.description", "Lulusan Universitas Sriwijaya dengan IPK 3,90."),
+    greeting: (profile?.greeting && profile.greeting[language]) || profile?.greeting?.en || profile?.greeting?.id || t("hero.greeting", "Halo, saya"),
+    title: (profile?.title && profile.title[language]) || profile?.title?.en || profile?.title?.id || t("hero.title", "Lulusan S1 Pendidikan Kimia"),
+    subtitle: (profile?.subtitle && profile.subtitle[language]) || profile?.subtitle?.en || profile?.subtitle?.id || (language === "en" ? "Analytical · Structured · Solution-Oriented" : (language === "ja" ? "分析的 · 構造化 · ソリューション志向" : "Analitis · Terstruktur · Berorientasi Solusi")),
+    description: (profile?.description && profile.description[language]) || profile?.description?.en || profile?.description?.id || t("hero.description", "Lulusan Universitas Sriwijaya dengan IPK 3,90."),
     cta: t("hero.cta_cv", "Unduh CV"),
     contact: t("hero.cta_contact", "Kontak Saya"),
   };
   const { slideUp, slideRight, slideLeft, scale } = useMotion();
+
+  const fullName = profile?.name?.trim() || "Irma Iryani";
+  const nameParts = fullName.split(" ");
+  const firstName = nameParts[0];
+  const restName = nameParts.slice(1).join(" ");
 
   return (
     <section
@@ -67,7 +75,7 @@ export default function Hero() {
               variants={slideUp}
               className="mb-3 text-4xl font-bold leading-tight tracking-tight text-text-main sm:text-5xl xl:text-6xl"
             >
-              Irma <span className="text-brown">Iryani</span>
+              {firstName} {restName && <span className="text-brown">{restName}</span>}
             </motion.h1>
 
             <motion.p
@@ -98,21 +106,21 @@ export default function Hero() {
             >
               <span className="flex items-center gap-1.5 rounded-full border border-brown-light/15 bg-cream-dark/60 px-3 py-1.5 text-xs text-text-muted">
                 <MapPin size={12} className="shrink-0 text-brown" />
-                Prabumulih, Sumatera Selatan
+                {profile?.location || "Prabumulih, Sumatera Selatan"}
               </span>
               <a
-                href="mailto:irmairyani698@gmail.com"
+                href={`mailto:${profile?.email || "irmairyani698@gmail.com"}`}
                 className="flex items-center gap-1.5 rounded-full border border-brown-light/15 bg-cream-dark/60 px-3 py-1.5 text-xs text-text-muted transition-colors hover:text-brown"
               >
                 <Mail size={12} className="shrink-0 text-brown" />
-                irmairyani698@gmail.com
+                {profile?.email || "irmairyani698@gmail.com"}
               </a>
               <a
-                href="tel:0887437204107"
+                href={`tel:${profile?.phone || "0887437204107"}`}
                 className="flex items-center gap-1.5 rounded-full border border-brown-light/15 bg-cream-dark/60 px-3 py-1.5 text-xs text-text-muted transition-colors hover:text-brown"
               >
                 <Phone size={12} className="shrink-0 text-brown" />
-                0887437204107
+                {profile?.phone || "0887437204107"}
               </a>
             </motion.div>
 
@@ -148,32 +156,38 @@ export default function Hero() {
                 {/* Dropdown menu */}
                 <div className="pointer-events-none absolute left-0 top-full z-20 mt-2 w-64 rounded-2xl border border-brown-light/20 bg-cream opacity-0 shadow-xl transition-all duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:translate-y-0 translate-y-1">
                   <div className="p-2">
-                    <a
-                      href="/curriculum-vitae/bps-asisten-statistisi.pdf"
-                      download
-                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-text-muted transition-colors hover:bg-cream-dark hover:text-brown"
-                    >
-                      <Download size={13} className="shrink-0 text-brown" />
-                      <div>
-                        <p className="font-semibold text-text-main">
-                          CV Asisten Statistisi
-                        </p>
-                        <p className="text-xs text-text-muted">PDF · BPS</p>
-                      </div>
-                    </a>
-                    <a
-                      href="/curriculum-vitae/bps-pranata-komputer.pdf"
-                      download
-                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-text-muted transition-colors hover:bg-cream-dark hover:text-brown"
-                    >
-                      <Download size={13} className="shrink-0 text-brown" />
-                      <div>
-                        <p className="font-semibold text-text-main">
-                          CV Pranata Komputer
-                        </p>
-                        <p className="text-xs text-text-muted">PDF · BPS</p>
-                      </div>
-                    </a>
+                    {(profile?.cvItems && profile.cvItems.length > 0
+                      ? profile.cvItems
+                      : [
+                          {
+                            label: "CV Asisten Statistisi",
+                            url: "/curriculum-vitae/bps-asisten-statistisi.pdf",
+                            description: "PDF · BPS",
+                          },
+                          {
+                            label: "CV Pranata Komputer",
+                            url: "/curriculum-vitae/bps-pranata-komputer.pdf",
+                            description: "PDF · BPS",
+                          },
+                        ]
+                    ).map((cv, idx) => (
+                      <a
+                        key={idx}
+                        href={cv.url}
+                        download
+                        className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-text-muted transition-colors hover:bg-cream-dark hover:text-brown"
+                      >
+                        <Download size={13} className="shrink-0 text-brown" />
+                        <div>
+                          <p className="font-semibold text-text-main">
+                            {cv.label}
+                          </p>
+                          {cv.description && (
+                            <p className="text-xs text-text-muted">{cv.description}</p>
+                          )}
+                        </div>
+                      </a>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -184,7 +198,7 @@ export default function Hero() {
               variants={slideUp}
               className="mt-7 flex justify-center lg:justify-start"
             >
-              <SocialLinks orientation="horizontal" size="md" />
+              <SocialLinks links={profile?.socialLinks} orientation="horizontal" size="md" />
             </motion.div>
           </motion.div>
 
@@ -204,8 +218,8 @@ export default function Hero() {
               {/* Photo */}
               <div className="relative h-full w-full overflow-hidden rounded-full border-4 border-brown-light/30 bg-cream-dark shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
                 <Image
-                  src="/profile.jpg"
-                  alt="Irma Iryani"
+                  src={profile?.photoUrl || "/profile.jpg"}
+                  alt={fullName}
                   fill
                   className="object-cover object-[center_45%]"
                   sizes="(max-width: 640px) 208px, (max-width: 768px) 256px, (max-width: 1024px) 288px, 384px"
@@ -224,7 +238,7 @@ export default function Hero() {
                 <p className="text-[9px] uppercase tracking-widest text-text-muted">
                   IPK
                 </p>
-                <p className="text-xl font-bold text-brown">3,90</p>
+                <p className="text-xl font-bold text-brown">{profile?.gpa || "3,90"}</p>
               </motion.div>
 
               {/* Badge — Prodi (top-left, inside padding boundary) */}
@@ -236,9 +250,9 @@ export default function Hero() {
                 className="absolute -top-3 left-0 rounded-2xl border border-brown-light/25 bg-cream px-3 py-2 shadow-lg"
               >
                 <p className="text-xs font-bold uppercase tracking-wide text-brown">
-                  S1 Kim. Pendidikan
+                  {profile?.degreeBadge || "S1 Kim. Pendidikan"}
                 </p>
-                <p className="text-xs text-text-muted">Universitas Sriwijaya</p>
+                <p className="text-xs text-text-muted">{profile?.universityBadge || "Universitas Sriwijaya"}</p>
               </motion.div>
             </div>
           </motion.div>
