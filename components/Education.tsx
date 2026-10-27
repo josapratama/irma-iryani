@@ -6,28 +6,16 @@ import { GraduationCap } from "lucide-react";
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
 import { useMotion } from "@/lib/motion";
 
-const content = {
-  id: {
-    sectionTag: "Riwayat Pendidikan",
-    title: "Pendidikan",
-    degree: "S1 Pendidikan Kimia",
-    university: "Universitas Sriwijaya",
-    period: "Agustus 2022 – Mei 2026",
-    gpa: "IPK 3,90",
-  },
-  en: {
-    sectionTag: "Educational Background",
-    title: "Education",
-    degree: "Bachelor of Chemistry Education",
-    university: "Sriwijaya University",
-    period: "August 2022 – May 2026",
-    gpa: "GPA 3.90",
-  },
-};
-
 export default function Education() {
-  const { language } = useThemeLanguage();
-  const c = content[language];
+  const { language, t } = useThemeLanguage();
+  const c = {
+    sectionTag: t("education.section_tag", "Riwayat Pendidikan"),
+    title: t("education.title", "Pendidikan"),
+    degree: language === "en" ? "Bachelor of Chemistry Education" : (language === "ja" ? "化学教育学士" : "S1 Pendidikan Kimia"),
+    university: language === "en" ? "Sriwijaya University" : (language === "ja" ? "スリウィジャヤ大学" : "Universitas Sriwijaya"),
+    period: language === "en" ? "August 2022 – May 2026" : (language === "ja" ? "2022年8月〜2026年5月" : "Agustus 2022 – Mei 2026"),
+    gpa: language === "en" ? "GPA 3.90" : (language === "ja" ? "GPA 3.90" : "IPK 3,90"),
+  };
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const { slideUp } = useMotion();

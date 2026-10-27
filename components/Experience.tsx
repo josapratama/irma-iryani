@@ -3,33 +3,13 @@
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
 import { Award, X, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
-import { useThemeLanguage } from "@/context/ThemeLanguageContext";
+import { useThemeLanguage, type Language } from "@/context/ThemeLanguageContext";
 import { useMotion } from "@/lib/motion";
 import Image from "next/image";
 import { useExperiences } from "@/hooks/useExperiences";
 import type { Experience, ExperienceImage } from "@/lib/api";
 
-// ─────────────────────────────────────────────
-// STATIC UI LABELS
-// ─────────────────────────────────────────────
-const uiLabels = {
-  id: {
-    sectionTag: "Pengalaman",
-    title: "Pengalaman & Organisasi",
-    photoLabel: "Dokumentasi",
-    committeeLabel: "Kepanitiaan",
-    retryLabel: "Coba lagi",
-    errorMsg: "Gagal memuat data pengalaman",
-  },
-  en: {
-    sectionTag: "Experience",
-    title: "Experience & Organization",
-    photoLabel: "Documentation",
-    committeeLabel: "Committee",
-    retryLabel: "Retry",
-    errorMsg: "Failed to load experience data",
-  },
-};
+
 
 // ─────────────────────────────────────────────
 // PHOTO LIGHTBOX
@@ -42,7 +22,7 @@ function Lightbox({
 }: {
   photos: ExperienceImage[];
   startIndex: number;
-  lang: "id" | "en";
+  lang: Language;
   onClose: () => void;
 }) {
   const [idx, setIdx] = useState(startIndex);
@@ -133,7 +113,7 @@ function PhotoStrip({
 }: {
   photos: ExperienceImage[];
   label: string;
-  lang: "id" | "en";
+  lang: Language;
 }) {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
@@ -212,8 +192,15 @@ function ExperienceSkeleton() {
 // MAIN COMPONENT
 // ─────────────────────────────────────────────
 export default function ExperienceSection() {
-  const { language } = useThemeLanguage();
-  const c = uiLabels[language];
+  const { language, t } = useThemeLanguage();
+  const c = {
+    sectionTag: t("experience.section_tag", "Pengalaman"),
+    title: t("experience.title", "Pengalaman & Organisasi"),
+    photoLabel: t("experience.photo_label", "Dokumentasi"),
+    committeeLabel: t("experience.committee_label", "Kepanitiaan"),
+    retryLabel: t("experience.retry_label", "Coba lagi"),
+    errorMsg: t("experience.error_msg", "Gagal memuat data pengalaman"),
+  };
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const { slideUp, slideLeft, slideRight, stagger } = useMotion();

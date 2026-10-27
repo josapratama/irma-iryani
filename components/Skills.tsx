@@ -8,40 +8,18 @@ import { useMotion } from "@/lib/motion";
 import { useSkills } from "@/hooks/useSkills";
 
 // ─────────────────────────────────────────────
-// STATIC CONTENT (labels & trainings hanya teks, tidak perlu API)
+// STATIC CONTENT
 // ─────────────────────────────────────────────
-const content = {
-  id: {
-    sectionTag: "Kompetensi",
-    title: "Keahlian",
-    trainingLabel: "Pelatihan",
-    trainings: [
-      "Digital Disruption & Transformation",
-      "Integrity at Work",
-      "Data Science",
-      "Emotional Intelligence",
-      "Emotional Resilience",
-      "Social Influence",
-      "Adaptability",
-      "Self Efficacy",
-    ],
-  },
-  en: {
-    sectionTag: "Competencies",
-    title: "Skills",
-    trainingLabel: "Trainings",
-    trainings: [
-      "Digital Disruption & Transformation",
-      "Integrity at Work",
-      "Data Science",
-      "Emotional Intelligence",
-      "Emotional Resilience",
-      "Social Influence",
-      "Adaptability",
-      "Self Efficacy",
-    ],
-  },
-};
+const TRAININGS = [
+  "Digital Disruption & Transformation",
+  "Integrity at Work",
+  "Data Science",
+  "Emotional Intelligence",
+  "Emotional Resilience",
+  "Social Influence",
+  "Adaptability",
+  "Self Efficacy",
+];
 
 // ─────────────────────────────────────────────
 // SKILL BAR
@@ -103,8 +81,13 @@ function SkillSkeleton() {
 // MAIN COMPONENT
 // ─────────────────────────────────────────────
 export default function Skills() {
-  const { language } = useThemeLanguage();
-  const c = content[language];
+  const { language, t } = useThemeLanguage();
+  const c = {
+    sectionTag: t("skills.section_tag", "Kompetensi"),
+    title: t("skills.title", "Keahlian"),
+    trainingLabel: language === "en" ? "Trainings" : (language === "ja" ? "トレーニング" : "Pelatihan"),
+    trainings: TRAININGS,
+  };
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const { slideUp, slideLeft, slideRight, stagger } = useMotion();

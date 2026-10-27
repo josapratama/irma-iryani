@@ -33,6 +33,10 @@ export default function Footer() {
                 <Heart size={12} className="fill-brown text-brown" /> oleh Irma
                 Iryani © 2026
               </>
+            ) : language === "ja" ? (
+              <>
+                <Heart size={12} className="fill-brown text-brown" /> イルマ・イリヤニによって作成されました © 2026
+              </>
             ) : (
               <>
                 Crafted with{" "}
@@ -48,7 +52,7 @@ export default function Footer() {
             transition={{ delay: 0.4 }}
             className="cursor-pointer text-xs font-medium text-text-muted transition-colors hover:text-brown"
           >
-            ↑ {language === "id" ? "Kembali ke atas" : "Back to top"}
+            ↑ {language === "id" ? "Kembali ke atas" : (language === "ja" ? "トップに戻る" : "Back to top")}
           </motion.button>
         </div>
       </div>

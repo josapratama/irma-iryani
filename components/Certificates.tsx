@@ -16,7 +16,7 @@ import {
   FolderOpen,
   RefreshCw,
 } from "lucide-react";
-import { useThemeLanguage } from "@/context/ThemeLanguageContext";
+import { useThemeLanguage, type Language } from "@/context/ThemeLanguageContext";
 import { useMotion } from "@/lib/motion";
 import Image from "next/image";
 import PdfThumbnail from "@/components/PdfThumbnail";
@@ -37,13 +37,13 @@ const catColors: Record<string, { bg: string; text: string; border: string }> =
     Organization: { bg: "#dcfce7", text: "#15803d", border: "#bbf7d0" },
   };
 
-const FILTERS: { key: string; id: string; en: string }[] = [
-  { key: "All", id: "Semua", en: "All" },
-  { key: "Technology", id: "Teknologi", en: "Technology" },
-  { key: "Soft Skills", id: "Soft Skills", en: "Soft Skills" },
-  { key: "Professional", id: "Profesional", en: "Professional" },
-  { key: "Data", id: "Data", en: "Data" },
-  { key: "Organization", id: "Organisasi", en: "Organization" },
+const FILTERS: { key: string; id: string; en: string; ja: string }[] = [
+  { key: "All", id: "Semua", en: "All", ja: "すべて" },
+  { key: "Technology", id: "Teknologi", en: "Technology", ja: "テクノロジー" },
+  { key: "Soft Skills", id: "Soft Skills", en: "Soft Skills", ja: "ソフトスキル" },
+  { key: "Professional", id: "Profesional", en: "Professional", ja: "専門職" },
+  { key: "Data", id: "Data", en: "Data", ja: "データ" },
+  { key: "Organization", id: "Organisasi", en: "Organization", ja: "組織" },
 ];
 
 // ─────────────────────────────────────────────
@@ -88,7 +88,7 @@ function ErrorState({
 }: {
   message: string;
   onRetry: () => void;
-  language: "id" | "en";
+  language: Language;
 }) {
   return (
     <div className="flex flex-col items-center gap-3 py-12 text-center">
@@ -115,7 +115,7 @@ function CertLightbox({
 }: {
   cert: Certificate;
   startIdx: number;
-  language: "id" | "en";
+  language: Language;
   onClose: () => void;
 }) {
   const [idx, setIdx] = useState(startIdx);
@@ -282,7 +282,7 @@ function RecoLightbox({
   onClose,
 }: {
   letter: RecommendationLetter;
-  language: "id" | "en";
+  language: Language;
   onClose: () => void;
 }) {
   const [idx, setIdx] = useState(0);
@@ -503,8 +503,25 @@ export default function Certificates() {
       download: "Download PDF",
       open: "Open PDF",
     },
+    ja: {
+      certTag: "証明書",
+      certTitle: "資格・受賞歴",
+      view: "表示",
+      recoTag: "推薦状",
+      recoTitle: "推薦状",
+      recoDesc:
+        "研修機関からの能力証明および推薦状の公式文書。",
+      recoPages: "ページ",
+      recoView: "手紙を開く",
+      projectTag: "プロジェクト",
+      projectTitle: "プロジェクトポートフォリオ",
+      projectDesc:
+        "実際の作業結果と完了したプロジェクトを含むポートフォリオ文書。",
+      download: "PDFをダウンロード",
+      open: "PDFを開く",
+    },
   };
-  const c = t[language];
+  const c = t[language as keyof typeof t] || t.en;
 
   // ── Filtered certs ─────────────────────────────────────────────────────────
   const filtered =

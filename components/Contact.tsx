@@ -15,47 +15,6 @@ import { useMotion } from "@/lib/motion";
 import emailjs from "@emailjs/browser";
 import { api } from "@/lib/api";
 
-// ─────────────────────────────────────────────
-// TRANSLATIONS
-// ─────────────────────────────────────────────
-const content = {
-  id: {
-    sectionTag: "Kontak",
-    title: "Hubungi Saya",
-    subtitle:
-      "Terbuka untuk peluang kerja, kolaborasi, atau sekadar berdiskusi.",
-    namePlaceholder: "Nama Anda",
-    emailPlaceholder: "Email Anda",
-    subjectPlaceholder: "Subjek",
-    messagePlaceholder: "Pesan Anda...",
-    send: "Kirim Pesan",
-    sent: "Terkirim!",
-    sending: "Mengirim...",
-    successMsg:
-      "Terima kasih! Pesan Anda sudah terkirim, saya akan segera membalas.",
-    errorMsg:
-      "Gagal mengirim pesan. Silakan coba lagi atau hubungi langsung via email.",
-    tryAgain: "Coba Lagi",
-  },
-  en: {
-    sectionTag: "Contact",
-    title: "Get In Touch",
-    subtitle:
-      "Open to job opportunities, collaborations, or just having a conversation.",
-    namePlaceholder: "Your Name",
-    emailPlaceholder: "Your Email",
-    subjectPlaceholder: "Subject",
-    messagePlaceholder: "Your Message...",
-    send: "Send Message",
-    sent: "Sent!",
-    sending: "Sending...",
-    successMsg: "Thank you! Your message has been sent, I will reply soon.",
-    errorMsg:
-      "Failed to send message. Please try again or contact me directly via email.",
-    tryAgain: "Try Again",
-  },
-};
-
 // EmailJS env vars
 const SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID ?? "";
 const TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID ?? "";
@@ -66,8 +25,22 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
 // MAIN COMPONENT
 // ─────────────────────────────────────────────
 export default function Contact() {
-  const { language } = useThemeLanguage();
-  const c = content[language];
+  const { language, t } = useThemeLanguage();
+  const c = {
+    sectionTag: t("contact.section_tag", "Kontak"),
+    title: t("contact.title", "Hubungi Saya"),
+    subtitle: language === "en" ? "Open to job opportunities, collaborations, or just having a conversation." : (language === "ja" ? "仕事の機会、コラボレーション、またはカジュアルな会話を歓迎します。" : "Terbuka untuk peluang kerja, kolaborasi, atau sekadar berdiskusi."),
+    namePlaceholder: t("contact.name_placeholder", "Nama Anda"),
+    emailPlaceholder: t("contact.email_placeholder", "Email Anda"),
+    subjectPlaceholder: language === "en" ? "Subject" : (language === "ja" ? "件名" : "Subjek"),
+    messagePlaceholder: t("contact.message_placeholder", "Pesan Anda..."),
+    send: t("contact.send_button", "Kirim Pesan"),
+    sent: language === "en" ? "Sent!" : (language === "ja" ? "送信完了！" : "Terkirim!"),
+    sending: t("contact.sending", "Mengirim..."),
+    successMsg: t("contact.success", "Terima kasih! Pesan Anda sudah terkirim, saya akan segera membalas."),
+    errorMsg: language === "en" ? "Failed to send message. Please try again." : (language === "ja" ? "メッセージの送信に失敗しました。" : "Gagal mengirim pesan. Silakan coba lagi."),
+    tryAgain: language === "en" ? "Try Again" : (language === "ja" ? "もう一度試す" : "Coba Lagi"),
+  };
   const ref = useRef(null);
   const formRef = useRef<HTMLFormElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });

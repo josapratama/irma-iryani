@@ -5,50 +5,27 @@ import { useRef } from "react";
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
 import { useMotion } from "@/lib/motion";
 
-const content = {
-  id: {
-    sectionTag: "Tentang Saya",
-    title: "Profil Singkat",
-    bio: "Saya merupakan lulusan S1 Pendidikan Kimia Universitas Sriwijaya dengan IPK 3,90 yang memiliki kemampuan analisis, pemecahan masalah, serta berpikir sistematis yang terbentuk dari latar belakang sains dan pengalaman penelitian. Terbiasa bekerja secara terstruktur, teliti dalam mengolah data, serta mampu beradaptasi dengan baik, baik secara individu maupun dalam tim. Selain itu, memiliki pemahaman dalam evaluasi, perencanaan program, dan pendampingan individu dari pengalaman akademik di bidang pendidikan. Saya memiliki ketertarikan untuk berkontribusi dalam lingkungan kerja yang dinamis, khususnya pada bidang yang membutuhkan ketelitian, pengelolaan informasi, serta kemampuan komunikasi yang baik.",
-    highlights: [
-      { label: "IPK", value: "3,90" },
-      { label: "Universitas", value: "UNSRI" },
-      { label: "Jurusan", value: "Pend. Kimia" },
-      { label: "Angkatan", value: "2022" },
-    ],
-    traits: [
-      "Analitis",
-      "Teliti",
-      "Terstruktur",
-      "Adaptif",
-      "Kolaboratif",
-      "Sistematis",
-    ],
-  },
-  en: {
-    sectionTag: "About Me",
-    title: "Brief Profile",
-    bio: "I am a graduate of Chemistry Education at Sriwijaya University with a GPA of 3.90, possessing analytical skills, problem-solving ability, and systematic thinking developed through a science background and research experience. Accustomed to working in a structured manner, meticulous in data processing, and able to adapt well both individually and in teams. I have an understanding of evaluation, program planning, and individual mentoring from academic experience in education. I am interested in contributing to a dynamic work environment, particularly in fields requiring precision, information management, and strong communication skills.",
-    highlights: [
-      { label: "GPA", value: "3.90" },
-      { label: "University", value: "UNSRI" },
-      { label: "Major", value: "Chem. Edu." },
-      { label: "Batch", value: "2022" },
-    ],
-    traits: [
-      "Analytical",
-      "Meticulous",
-      "Structured",
-      "Adaptive",
-      "Collaborative",
-      "Systematic",
-    ],
-  },
-};
-
 export default function About() {
-  const { language } = useThemeLanguage();
-  const c = content[language];
+  const { language, t } = useThemeLanguage();
+  const c = {
+    sectionTag: t("about.section_tag", "Tentang Saya"),
+    title: t("about.title", "Profil Singkat"),
+    bio: t("about.bio", "Saya merupakan lulusan S1 Pendidikan Kimia Universitas Sriwijaya dengan IPK 3,90."),
+    highlights: [
+      { label: t("about.gpa", "IPK"), value: "3,90" },
+      { label: t("about.university", "Universitas"), value: "UNSRI" },
+      { label: t("about.major", "Jurusan"), value: "Pend. Kimia" },
+      { label: t("about.batch", "Angkatan"), value: "2022" },
+    ],
+    traits: [
+      language === "en" ? "Analytical" : (language === "ja" ? "分析的" : "Analitis"),
+      language === "en" ? "Meticulous" : (language === "ja" ? "几帳面" : "Teliti"),
+      language === "en" ? "Structured" : (language === "ja" ? "構造化" : "Terstruktur"),
+      language === "en" ? "Adaptive" : (language === "ja" ? "適応力" : "Adaptif"),
+      language === "en" ? "Collaborative" : (language === "ja" ? "協力的" : "Kolaboratif"),
+      language === "en" ? "Systematic" : (language === "ja" ? "体系的" : "Sistematis"),
+    ],
+  };
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const { slideUp, slideRight, slideLeft, stagger } = useMotion();

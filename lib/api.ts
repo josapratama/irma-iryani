@@ -344,7 +344,7 @@ export const api = {
 };
 
 // ─── Response types (mirror backend models) ────────────────────────────────
-export type BilingualText = { id: string; en: string };
+export type BilingualText = Record<string, string>;
 
 export type Certificate = {
   _id: string;
@@ -386,7 +386,7 @@ export type SkillGroup = {
   isVisible?: boolean;
 };
 
-export type ExperiencePoint = { id: string; en: string };
+export type ExperiencePoint = Record<string, string>;
 
 export type OrgEvent = {
   name: BilingualText;

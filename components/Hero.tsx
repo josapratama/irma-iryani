@@ -7,27 +7,6 @@ import { useMotion } from "@/lib/motion";
 import Image from "next/image";
 import SocialLinks from "@/components/SocialLinks";
 
-const content = {
-  id: {
-    greeting: "Halo, saya",
-    title: "Lulusan S1 Pendidikan Kimia",
-    subtitle: "Analitis · Terstruktur · Berorientasi Solusi",
-    description:
-      "Lulusan Universitas Sriwijaya dengan IPK 3,90. Terbiasa bekerja terstruktur, teliti mengolah data, dan berkomitmen mengembangkan kompetensi secara profesional.",
-    cta: "Unduh CV",
-    contact: "Kontak Saya",
-  },
-  en: {
-    greeting: "Hello, I'm",
-    title: "Chemistry Education Graduate",
-    subtitle: "Analytical · Structured · Solution-Oriented",
-    description:
-      "Graduate of Sriwijaya University with GPA 3.90. Accustomed to structured work, meticulous in data processing, and committed to professionally developing competencies.",
-    cta: "Download CV",
-    contact: "Contact Me",
-  },
-};
-
 function scrollToSection(id: string) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -37,8 +16,15 @@ function scrollToSection(id: string) {
 }
 
 export default function Hero() {
-  const { language } = useThemeLanguage();
-  const c = content[language];
+  const { language, t } = useThemeLanguage();
+  const c = {
+    greeting: t("hero.greeting", "Halo, saya"),
+    title: t("hero.title", "Lulusan S1 Pendidikan Kimia"),
+    subtitle: language === "en" ? "Analytical · Structured · Solution-Oriented" : (language === "ja" ? "分析的 · 構造化 · ソリューション志向" : "Analitis · Terstruktur · Berorientasi Solusi"),
+    description: t("hero.description", "Lulusan Universitas Sriwijaya dengan IPK 3,90."),
+    cta: t("hero.cta_cv", "Unduh CV"),
+    contact: t("hero.cta_contact", "Kontak Saya"),
+  };
   const { slideUp, slideRight, slideLeft, scale } = useMotion();
 
   return (

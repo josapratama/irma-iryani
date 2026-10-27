@@ -5,29 +5,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Moon, Sun, Globe, Menu, X } from "lucide-react";
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
 
-const navItems = {
-  id: [
-    { label: "Beranda", href: "hero" },
-    { label: "Tentang", href: "about" },
-    { label: "Pendidikan", href: "education" },
-    { label: "Pengalaman", href: "experience" },
-    { label: "Keahlian", href: "skills" },
-    { label: "Sertifikat", href: "certificates" },
-    { label: "Kontak", href: "contact" },
-  ],
-  en: [
-    { label: "Home", href: "hero" },
-    { label: "About", href: "about" },
-    { label: "Education", href: "education" },
-    { label: "Experience", href: "experience" },
-    { label: "Skills", href: "skills" },
-    { label: "Certificates", href: "certificates" },
-    { label: "Contact", href: "contact" },
-  ],
-};
+const navDef = [
+  { key: "nav.home", href: "hero", fallback: "Beranda" },
+  { key: "nav.about", href: "about", fallback: "Tentang" },
+  { key: "nav.education", href: "education", fallback: "Pendidikan" },
+  { key: "nav.experience", href: "experience", fallback: "Pengalaman" },
+  { key: "nav.skills", href: "skills", fallback: "Keahlian" },
+  { key: "nav.certificates", href: "certificates", fallback: "Sertifikat" },
+  { key: "nav.contact", href: "contact", fallback: "Kontak" },
+];
 
 export default function Navbar() {
-  const { theme, language, toggleTheme, toggleLanguage } = useThemeLanguage();
+  const { theme, language, toggleTheme, toggleLanguage, t } = useThemeLanguage();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("hero");
@@ -73,7 +62,7 @@ export default function Navbar() {
     }, 50);
   }, []);
 
-  const items = navItems[language];
+  const items = navDef.map((n) => ({ label: t(n.key, n.fallback), href: n.href }));
 
   return (
     <motion.nav
@@ -141,7 +130,7 @@ export default function Navbar() {
             className="flex cursor-pointer items-center gap-1.5 rounded-full border border-brown-light/25 bg-cream-dark/35 px-3 py-1.5 text-xs font-semibold text-text-muted transition-colors hover:text-brown"
           >
             <Globe size={12} />
-            {language === "id" ? "EN" : "ID"}
+            {language.toUpperCase()}
           </motion.button>
 
           <motion.button
