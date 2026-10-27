@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { MapPin, Mail, Phone, Download, ChevronDown } from "lucide-react";
 import { useThemeLanguage } from "@/context/ThemeLanguageContext";
@@ -19,6 +20,7 @@ function scrollToSection(id: string) {
 export default function Hero() {
   const { language, t } = useThemeLanguage();
   const { data: profile } = useProfile();
+  const [isCvOpen, setIsCvOpen] = useState(false);
 
   const c = {
     greeting: (profile?.greeting && profile.greeting[language]) || profile?.greeting?.en || profile?.greeting?.id || t("hero.greeting", "Halo, saya"),
@@ -145,16 +147,31 @@ export default function Hero() {
               {/* CV dropdown */}
               <div className="relative group">
                 <motion.button
+                  type="button"
+                  onClick={() => setIsCvOpen(!isCvOpen)}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   className="flex items-center gap-2 rounded-full border border-brown-light/30 px-6 py-2.5 text-sm font-semibold text-brown transition-colors hover:bg-brown/8 cursor-pointer"
+                  aria-expanded={isCvOpen}
                 >
                   <Download size={14} />
-                  {c.cta}
+                  <span>{c.cta}</span>
+                  <ChevronDown
+                    size={13}
+                    className={`transition-transform duration-200 ${
+                      isCvOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </motion.button>
 
                 {/* Dropdown menu */}
-                <div className="pointer-events-none absolute left-0 top-full z-20 mt-2 w-64 rounded-2xl border border-brown-light/20 bg-cream opacity-0 shadow-xl transition-all duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:translate-y-0 translate-y-1">
+                <div
+                  className={`absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full z-30 mt-2 w-64 rounded-2xl border border-brown-light/20 bg-cream shadow-xl transition-all duration-200 ${
+                    isCvOpen
+                      ? "pointer-events-auto opacity-100 translate-y-0"
+                      : "pointer-events-none opacity-0 translate-y-1 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:translate-y-0"
+                  }`}
+                >
                   <div className="p-2">
                     {(profile?.cvItems && profile.cvItems.length > 0
                       ? profile.cvItems
@@ -175,6 +192,7 @@ export default function Hero() {
                         key={idx}
                         href={cv.url}
                         download
+                        onClick={() => setIsCvOpen(false)}
                         className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-text-muted transition-colors hover:bg-cream-dark hover:text-brown"
                       >
                         <Download size={13} className="shrink-0 text-brown" />

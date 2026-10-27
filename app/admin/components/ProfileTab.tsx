@@ -124,9 +124,38 @@ export default function ProfileTab({ profile, onSave, isLoading }: ProfileTabPro
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* Photo URL with Live Avatar Preview */}
+          <div className="flex items-center gap-3 p-3 rounded-xl border border-[var(--color-brown-light)]/20 bg-[var(--color-cream-dark)]/25">
+            <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden border-2 border-[var(--color-brown-light)]/40 bg-[var(--color-cream-dark)] shrink-0 flex items-center justify-center shadow-xs">
+              {form.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={form.photoUrl}
+                  alt={form.name || "Foto"}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <User className="w-5 h-5 text-[var(--color-brown)] opacity-50" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <label className="block font-bold mb-1 text-[11px]">Path / URL Foto Profil</label>
+              <input
+                type="text"
+                value={form.photoUrl || ""}
+                onChange={(e) => setForm({ ...form, photoUrl: e.target.value })}
+                placeholder="/profile.jpg atau URL gambar"
+                className="w-full px-3 py-1.5 rounded-lg border border-[var(--color-brown-light)]/30 bg-[var(--color-bg-primary)] outline-none focus:border-[var(--color-brown)] font-medium text-xs"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div>
-              <label className="block font-bold mb-1">Nilai IPK</label>
+              <label className="block font-bold mb-1 text-[11px]">Nilai IPK</label>
               <input
                 type="text"
                 value={form.gpa || ""}
@@ -136,20 +165,7 @@ export default function ProfileTab({ profile, onSave, isLoading }: ProfileTabPro
               />
             </div>
             <div>
-              <label className="block font-bold mb-1">Path / URL Foto</label>
-              <input
-                type="text"
-                value={form.photoUrl || ""}
-                onChange={(e) => setForm({ ...form, photoUrl: e.target.value })}
-                placeholder="/profile.jpg"
-                className="w-full px-3 py-2 rounded-xl border border-[var(--color-brown-light)]/30 bg-[var(--color-cream-dark)]/20 outline-none focus:border-[var(--color-brown)] font-medium"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block font-bold mb-1">Badge Gelar/Prodi</label>
+              <label className="block font-bold mb-1 text-[11px]">Badge Gelar</label>
               <input
                 type="text"
                 value={form.degreeBadge || ""}
@@ -159,7 +175,7 @@ export default function ProfileTab({ profile, onSave, isLoading }: ProfileTabPro
               />
             </div>
             <div>
-              <label className="block font-bold mb-1">Badge Universitas</label>
+              <label className="block font-bold mb-1 text-[11px]">Badge Kampus</label>
               <input
                 type="text"
                 value={form.universityBadge || ""}

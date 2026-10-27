@@ -72,32 +72,32 @@ export default function Education() {
             <motion.div
               key={idx}
               variants={slideUp}
-              className="rounded-3xl border border-brown-light/20 bg-cream p-6 sm:p-8 lg:p-10 shadow-sm"
+              className="rounded-3xl border border-brown-light/20 bg-cream p-5 sm:p-8 lg:p-10 shadow-sm hover:border-brown/40 hover:shadow-md transition-all"
             >
-              <div className="flex items-start gap-4 sm:gap-6">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-brown-light/30 bg-brown/10">
-                  <GraduationCap size={24} className="text-brown" />
+              <div className="flex items-start gap-3.5 sm:gap-6">
+                <div className="flex h-11 w-11 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl border border-brown-light/30 bg-brown/10 text-brown shadow-xs">
+                  <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-xl font-bold text-text-main">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-3">
+                    <div className="min-w-0">
+                      <h3 className="text-lg sm:text-xl font-bold text-text-main leading-snug">
                         {item.degree}
                       </h3>
-                      <p className="mt-0.5 font-medium text-brown">
+                      <p className="mt-0.5 text-sm sm:text-base font-semibold text-brown">
                         {item.university}
                       </p>
                       {item.description && (
-                        <p className="mt-2 text-xs text-text-muted leading-relaxed">
+                        <p className="mt-2 text-xs sm:text-sm text-text-muted leading-relaxed">
                           {item.description}
                         </p>
                       )}
                     </div>
-                    <div className="shrink-0 text-right">
-                      <p className="text-sm text-text-muted">{item.period}</p>
-                      <p className="mt-1 text-lg font-bold text-brown">
+                    <div className="shrink-0 text-left sm:text-right pt-1 sm:pt-0 border-t sm:border-t-0 border-brown-light/15 mt-2 sm:mt-0">
+                      <p className="text-xs sm:text-sm font-medium text-text-muted">{item.period}</p>
+                      <span className="inline-block mt-1 sm:mt-1.5 px-3 py-1 rounded-full bg-brown/10 border border-brown/20 text-xs sm:text-sm font-bold text-brown">
                         {language === "id" ? `IPK ${item.gpa}` : `GPA ${item.gpa}`}
-                      </p>
+                      </span>
                     </div>
                   </div>
                 </div>
