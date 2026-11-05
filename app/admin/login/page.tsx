@@ -3,7 +3,18 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Lock, Mail, Eye, EyeOff, ArrowLeft, ShieldCheck, Loader2 } from "lucide-react";
+import {
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  ShieldCheck,
+  Loader2,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { api, getAuthToken, setAuthToken, setAuthEmail } from "@/lib/api";
 
 export default function AdminLoginPage() {
@@ -13,8 +24,14 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDirect, setShowDirect] = useState(false);
+  const [ssoConfig, setSsoConfig] = useState({
+    authhub_url: "https://auth.josapratama.com",
+    client_id: "ah_client_irma_5a6b7c",
+    client_slug: "irma-iryani",
+  });
 
-  // Jika sudah punya token, cek validitas ke backend dan redirect ke /admin
+  // Jika sudah punya token, redirect ke /admin
   useEffect(() => {
     const token = getAuthToken();
     if (token) {
@@ -24,10 +41,25 @@ export default function AdminLoginPage() {
           router.replace("/admin");
         })
         .catch(() => {
-          // Token expired atau invalid, biarkan di halaman login
+          // Token expired atau invalid
         });
     }
+
+    api.admin
+      .getAuthHubConfig()
+      .then((cfg) => {
+        if (cfg) setSsoConfig(cfg);
+      })
+      .catch(() => {});
   }, [router]);
+
+  const handleAuthHubSSO = () => {
+    const redirectUri = `${window.location.origin}/auth/callback`;
+    const ssoUrl = `${ssoConfig.authhub_url}/?oauth=1&client_id=${ssoConfig.client_id}&client_slug=${ssoConfig.client_slug}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&state=irma_sso&response_type=code`;
+    window.location.href = ssoUrl;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,16 +110,25 @@ export default function AdminLoginPage() {
         {/* Card */}
         <div className="bg-[var(--color-cream-dark)]/50 dark:bg-[var(--color-cream-dark)]/20 backdrop-blur-xl border border-[var(--color-brown-light)]/20 rounded-2xl p-6 sm:p-8 shadow-xl shadow-[var(--color-brown-dark)]/5">
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[var(--color-brown)]/10 border border-[var(--color-brown)]/20 text-[var(--color-brown)] mb-3">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--color-text-main)]">
-              Admin Login
+              Admin Irma Iryani
             </h1>
             <p className="text-xs text-[var(--color-text-muted)] mt-1">
-              Masuk untuk mengelola data portfolio Irma Iryani
+              Pusat Otentikasi Dashboard Portfolio
             </p>
+          </div>
+
+          {/* Info Notice */}
+          <div className="mb-6 p-3.5 rounded-xl bg-[var(--color-brown)]/10 border border-[var(--color-brown)]/20 text-xs text-[var(--color-text-main)] leading-relaxed">
+            <div className="font-bold flex items-center gap-1.5 text-[var(--color-brown)] mb-1">
+              <span>🌸</span>
+              <span>AuthHub Dedicated SSO</span>
+            </div>
+            Login menggunakan akun khusus <strong>Irma Iryani</strong> di AuthHub. Pendaftaran publik dinonaktifkan demi privasi dan keamanan data portfolio.
           </div>
 
           {/* Error alert */}
@@ -98,85 +139,109 @@ export default function AdminLoginPage() {
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-xs font-semibold text-[var(--color-text-main)] mb-1.5"
-              >
-                Email Admin
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--color-text-muted)]">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@josapratama.com"
-                  className="w-full pl-9.5 pr-4 py-2.5 text-xs rounded-xl bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 focus:border-[var(--color-brown)] focus:ring-2 focus:ring-[var(--color-brown)]/20 outline-none transition-all placeholder:text-[var(--color-text-muted)]/50 text-[var(--color-text-main)]"
-                />
-              </div>
-            </div>
+          {/* Primary SSO Button */}
+          <button
+            type="button"
+            onClick={handleAuthHubSSO}
+            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 hover:opacity-95 active:scale-[0.99] text-white font-semibold text-xs shadow-lg shadow-amber-950/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>Masuk dengan AuthHub SSO</span>
+            <ExternalLink className="w-4 h-4" />
+          </button>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-xs font-semibold text-[var(--color-text-main)] mb-1.5"
-              >
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--color-text-muted)]">
-                  <Lock className="w-4 h-4" />
-                </div>
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full pl-9.5 pr-10 py-2.5 text-xs rounded-xl bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 focus:border-[var(--color-brown)] focus:ring-2 focus:ring-[var(--color-brown)]/20 outline-none transition-all placeholder:text-[var(--color-text-muted)]/50 text-[var(--color-text-main)]"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-[var(--color-text-muted)] hover:text-[var(--color-brown)] transition-colors cursor-pointer"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
+          {/* Toggle Direct Login */}
+          <div className="mt-5 text-center">
             <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full mt-2 py-2.5 px-4 rounded-xl bg-[var(--color-brown)] hover:bg-[var(--color-brown-dark)] active:scale-[0.99] text-white font-medium text-xs shadow-md shadow-[var(--color-brown)]/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              type="button"
+              onClick={() => setShowDirect(!showDirect)}
+              className="text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-brown)] inline-flex items-center gap-1 transition-colors cursor-pointer"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Memverifikasi...</span>
-                </>
-              ) : (
-                <span>Masuk ke Dashboard</span>
-              )}
+              <span>{showDirect ? "Sembunyikan Login Manual" : "Login Manual / Sandi"}</span>
+              {showDirect ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
-          </form>
+          </div>
+
+          {/* Form Direct Login */}
+          {showDirect && (
+            <form onSubmit={handleSubmit} className="mt-4 pt-4 border-t border-[var(--color-brown-light)]/20 space-y-3.5 animate-in fade-in">
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-[11px] font-semibold text-[var(--color-text-main)] mb-1"
+                >
+                  Email Admin
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--color-text-muted)]">
+                    <Mail className="w-3.5 h-3.5" />
+                  </div>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="irma@josapratama.com"
+                    className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 focus:border-[var(--color-brown)] outline-none transition-all placeholder:text-[var(--color-text-muted)]/50 text-[var(--color-text-main)]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-[11px] font-semibold text-[var(--color-text-main)] mb-1"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--color-text-muted)]">
+                    <Lock className="w-3.5 h-3.5" />
+                  </div>
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full pl-9 pr-9 py-2 text-xs rounded-xl bg-[var(--color-cream)] dark:bg-[var(--color-cream-dark)] border border-[var(--color-brown-light)]/30 focus:border-[var(--color-brown)] outline-none transition-all placeholder:text-[var(--color-text-muted)]/50 text-[var(--color-text-main)]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-[var(--color-text-muted)] hover:text-[var(--color-brown)] transition-colors cursor-pointer"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-3.5 h-3.5" />
+                    ) : (
+                      <Eye className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-2 px-4 rounded-xl bg-[var(--color-brown)] hover:bg-[var(--color-brown-dark)] active:scale-[0.99] text-white font-medium text-xs shadow-md shadow-[var(--color-brown)]/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Memverifikasi...</span>
+                  </>
+                ) : (
+                  <span>Masuk Manual</span>
+                )}
+              </button>
+            </form>
+          )}
 
           {/* Footer note */}
-          <div className="mt-6 pt-5 border-t border-[var(--color-brown-light)]/15 text-center">
+          <div className="mt-6 pt-4 border-t border-[var(--color-brown-light)]/15 text-center">
             <p className="text-[11px] text-[var(--color-text-muted)]">
-              Panel Pengelola Konten & Database Portfolio
+              Portfolio Resmi Irma Iryani • Hak Akses Terbatas
             </p>
           </div>
         </div>

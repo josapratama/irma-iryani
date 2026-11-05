@@ -153,6 +153,15 @@ export const api = {
   // ─── Admin APIs ──────────────────────────────────────────────────────────
   admin: {
     // Auth
+    getAuthHubConfig: () =>
+      apiFetch<{ authhub_url: string; client_id: string; client_slug: string }>("/auth/authhub/config"),
+
+    authHubCallback: (body: { code: string; redirect_uri: string }) =>
+      apiFetch<{ token: string; email: string; name?: string }>("/auth/authhub/callback", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
     login: (body: { email: string; password: string }) =>
       apiFetch<{ token: string; email: string }>("/auth/login", {
         method: "POST",
