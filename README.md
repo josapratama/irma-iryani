@@ -1,110 +1,38 @@
-# Irma Iryani — Portfolio
+# 🩺 Irma Iryani Platform (Monorepo)
 
-Portfolio pribadi Irma Iryani, S1 Pendidikan Kimia Universitas Sriwijaya.
+A full-stack healthcare and professional portfolio platform built with **Next.js 14**, **Tailwind CSS**, **Hono**, and **MongoDB**.
 
-Built with **Next.js 16**, **Tailwind CSS v4**, and **Framer Motion**.
+---
 
-## Stack
+## 🏗️ Monorepo Architecture
 
-- [Next.js](https://nextjs.org) — React framework (App Router)
-- [Tailwind CSS v4](https://tailwindcss.com) — utility-first styling
-- [Framer Motion](https://www.framer.com/motion/) — animations
-- [EmailJS](https://www.emailjs.com) — contact form without a backend
-- [Lucide React](https://lucide.dev) — icons
+```
+irma-iryani/
+├── apps/
+│   ├── backend/              # Hono + MongoDB REST API backend
+│   └── frontend/             # Next.js 14 App Router + Tailwind CSS frontend
+├── docker-compose.yml        # Multi-service stack (MongoDB + Backend + Frontend)
+└── package.json              # Monorepo Workspace configuration
+```
 
-## Features
+---
 
-- Dark / light mode toggle
-- Indonesian / English language toggle
-- Smooth scroll navigation (mobile-friendly)
-- Accessible animations (respects `prefers-reduced-motion`)
-- Contact form with EmailJS integration
-- Responsive across all screen sizes
-- Scroll-to-top on every page load/refresh
+## 🚀 Quick Start
 
-## Getting Started
-
-### 1. Clone & install
-
+### Run with Docker Compose
 ```bash
-git clone https://github.com/your-username/portfolio-irma.git
-cd portfolio-irma
+docker compose up -d --build
+```
+- **Web Frontend**: `http://localhost:3007`
+- **Backend API**: `http://localhost:3006`
+
+### Run Locally with Node.js
+```bash
 npm install
-```
-
-### 2. Setup environment variables
-
-Copy the example file and fill in your EmailJS credentials:
-
-```bash
-cp .env.example .env.local
-```
-
-Edit `.env.local`:
-
-```env
-NEXT_PUBLIC_EMAILJS_SERVICE_ID=service_xxxxxxx
-NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=template_xxxxxxx
-NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=xxxxxxxxxxxxxxxxxxxxxx
-```
-
-> If left empty, the contact form falls back to opening the default mail app.
-
-### 3. Run locally
-
-```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+---
 
-## Deployment
-
-### Vercel (recommended)
-
-1. Push to GitHub
-2. Import repo at [vercel.com/new](https://vercel.com/new)
-3. Add environment variables in Vercel dashboard:
-   - `NEXT_PUBLIC_EMAILJS_SERVICE_ID`
-   - `NEXT_PUBLIC_EMAILJS_TEMPLATE_ID`
-   - `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY`
-4. Deploy — done
-
-## Project Structure
-
-```
-portfolio-irma/
-├── app/
-│   ├── globals.css       # Tailwind v4 theme tokens + base styles
-│   ├── layout.tsx        # Root layout with scroll-to-top script
-│   └── page.tsx          # Main page (assembles all sections)
-├── components/
-│   ├── Navbar.tsx
-│   ├── Hero.tsx
-│   ├── About.tsx
-│   ├── Education.tsx
-│   ├── Experience.tsx
-│   ├── Skills.tsx
-│   ├── Certificates.tsx
-│   ├── Contact.tsx
-│   └── Footer.tsx
-├── context/
-│   └── ThemeLanguageContext.tsx
-├── lib/
-│   └── motion.ts         # Centralized Framer Motion variants
-└── public/
-    ├── profile.jpg
-    ├── cv.pdf
-    └── certificates/
-```
-
-## EmailJS Template
-
-Template variables used (configure in EmailJS dashboard):
-
-| Variable         | Description                           |
-| ---------------- | ------------------------------------- |
-| `{{from_name}}`  | Sender's name                         |
-| `{{from_email}}` | Sender's email                        |
-| `{{message}}`    | Message body                          |
-| `{{to_name}}`    | Recipient name (set to "Irma Iryani") |
+## 📄 License
+MIT
